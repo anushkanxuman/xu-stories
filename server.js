@@ -7,7 +7,6 @@ const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
 const VIDEOS = path.join(PUBLIC, 'videos');
-const REVIEWS_FILE = path.join(ROOT, 'reviews.json');
 const POSTERS = path.join(PUBLIC, 'posters');
 const META_FILE = path.join(ROOT, 'videos-meta.json'); // optional titles: [{ "file": "a.mp4", "title": "...", "description": "..." }]
 
@@ -76,53 +75,11 @@ function safeJoin(base, rel) {
   return p.startsWith(base + path.sep) || p === base ? p : null;
 }
 
-function readBody(req, limit = 20000) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', (c) => {
-      data += c;
-      if (data.length > limit) { reject(new Error('too large')); req.destroy(); }
-    });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
-
-const clean = (s, max) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
-
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   const pathname = decodeURIComponent(url.pathname);
 
   if (pathname === '/api/videos' && req.method === 'GET') return send(res, 200, listVideos());
-
-  if (pathname === '/api/reviews' && req.method === 'GET') {
-    const all = readJSON(REVIEWS_FILE, []);
-    const vid = url.searchParams.get('video');
-    return send(res, 200, vid ? all.filter((r) => r.videoId === vid) : all);
-  }
-
-  if (pathname === '/api/reviews' && req.method === 'POST') {
-    try {
-      const b = JSON.parse(await readBody(req));
-      const review = {
-        id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-        videoId: clean(b.videoId, 300),
-        name: clean(b.name, 40) || 'Anonymous',
-        rating: Math.min(5, Math.max(1, parseInt(b.rating, 10) || 5)),
-        text: String(b.text ?? '').trim().slice(0, 1000),
-        createdAt: new Date().toISOString(),
-      };
-      if (!review.text) return send(res, 400, { error: 'Review text is required' });
-      if (!listVideos().some((v) => v.id === review.videoId)) return send(res, 400, { error: 'Unknown video' });
-      const all = readJSON(REVIEWS_FILE, []);
-      all.push(review);
-      fs.writeFileSync(REVIEWS_FILE, JSON.stringify(all, null, 2));
-      return send(res, 201, review);
-    } catch {
-      return send(res, 400, { error: 'Bad request' });
-    }
-  }
 
   const p = safeJoin(PUBLIC, pathname === '/' ? 'index.html' : pathname.slice(1));
   return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');

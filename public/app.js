@@ -2,9 +2,7 @@
   const $ = (id) => document.getElementById(id);
   const ring = $('ring'), carousel = $('carousel'), video = $('video');
   const els = {
-    empty: $('empty'), stage: $('stage'), stageTitle: $('stage-title'), stageDesc: $('stage-desc'),
-    reviews: $('reviews'), reviewsFor: $('reviews-for'), avg: $('avg'), list: $('review-list'),
-    form: $('review-form'), name: $('r-name'), text: $('r-text'), stars: $('r-stars'), msg: $('form-msg'),
+    empty: $('empty'),
     player: $('player'), nowTitle: $('now-title'), nowSub: $('now-sub'),
     prev: $('prev'), play: $('play'), next: $('next'), seek: $('seek'), cur: $('cur'), dur: $('dur'),
     mute: $('mute'), volume: $('volume'),
@@ -12,9 +10,9 @@
 
   let videos = [], cards = [];
   let pos = 0;            // unwrapped ring position (float while dragging)
-  let focused = -1;       // video at the front of the ring (reviews follow this)
+  let focused = -1;       // video at the front of the ring
   let playing = -1;       // video loaded in the player
-  let rating = 5, seeking = false;
+  let seeking = false;
   let autoMuted = false;  // muted only because the browser blocked sound
   let frontSlot = -1;
   let host = null;        // card currently showing the playing video
@@ -208,97 +206,12 @@
     if (autoMuted) { autoMuted = false; video.muted = false; els.mute.textContent = '🔊'; }
   }, { capture: true });
 
-  /* ---------- reviews ---------- */
-  const store = {
-    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
-    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
-  };
-  els.name.value = store.get('stories-name') || '';
-
-  function paintStars() {
-    els.stars.innerHTML = '';
-    for (let s = 1; s <= 5; s++) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.textContent = '★'; b.className = s <= rating ? 'on' : '';
-      b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(s === rating));
-      b.setAttribute('aria-label', `${s} star${s > 1 ? 's' : ''}`);
-      b.addEventListener('click', () => { rating = s; paintStars(); });
-      els.stars.appendChild(b);
-    }
-  }
-  paintStars();
-
-  const localReviews = () => { try { return JSON.parse(store.get('stories-reviews') || '[]'); } catch { return []; } };
-  let reviewReq = 0;
-  async function loadReviews() {
-    if (focused < 0) return;
-    const id = videos[focused].id, req = ++reviewReq;
-    try {
-      const r = await fetch('/api/reviews?video=' + encodeURIComponent(id));
-      if (!r.ok) throw new Error('no backend');
-      const data = await r.json();
-      if (req !== reviewReq) return; // user rotated on
-      renderReviews(data);
-    } catch {
-      if (req === reviewReq) renderReviews(localReviews().filter((x) => x.videoId === id));
-    }
-  }
-  function renderReviews(data) {
-    els.list.innerHTML = '';
-    if (!data.length) {
-      const li = document.createElement('li'); li.className = 'none'; li.style.border = '0'; li.style.background = 'none';
-      li.textContent = 'No reviews yet. Be the first!'; els.list.appendChild(li);
-      els.avg.textContent = ''; return;
-    }
-    const avg = data.reduce((a, r) => a + r.rating, 0) / data.length;
-    els.avg.textContent = `★ ${avg.toFixed(1)} · ${data.length} review${data.length > 1 ? 's' : ''}`;
-    data.slice().reverse().forEach((r) => {
-      const li = document.createElement('li');
-      const meta = document.createElement('div'); meta.className = 'meta';
-      const who = document.createElement('span'); who.className = 'who'; who.textContent = r.name;
-      const st = document.createElement('span'); st.className = 'stars-ro';
-      st.textContent = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
-      st.setAttribute('aria-label', `${r.rating} out of 5`);
-      const when = document.createElement('span'); when.className = 'when';
-      when.textContent = new Date(r.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-      const left = document.createElement('span'); left.append(who, ' ', st);
-      meta.append(left, when);
-      const p = document.createElement('p'); p.textContent = r.text;
-      li.append(meta, p); els.list.appendChild(li);
-    });
-  }
+  /* ---------- autoplay ---------- */
   let autoTimer;
-  function onFocus() {
-    if (focused < 0) return;
-    clearTimeout(autoTimer); // autoplay once the card has settled in front
+  function onFocus() { // autoplay once the card has settled in front
+    clearTimeout(autoTimer);
     autoTimer = setTimeout(() => { if (focused >= 0 && playing !== focused) load(focused, true); }, 450);
-    els.reviews.hidden = false;
-    els.reviewsFor.textContent = '· Video ' + (focused + 1);
-    els.list.innerHTML = ''; els.avg.textContent = '';
-    loadReviews();
   }
-
-  els.form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = els.form.querySelector('button[type=submit]');
-    const body = { videoId: videos[focused].id, name: els.name.value, rating, text: els.text.value };
-    if (!body.text.trim()) return;
-    btn.disabled = true; els.msg.className = 'form-msg'; els.msg.textContent = 'Posting…';
-    try {
-      const r = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (r.status === 404 || r.status === 405) { // static hosting: keep it in this browser only
-        const all = localReviews();
-        all.push({ id: String(Date.now()), videoId: body.videoId, name: body.name.trim() || 'Anonymous', rating, text: body.text.trim().slice(0, 1000), createdAt: new Date().toISOString() });
-        store.set('stories-reviews', JSON.stringify(all));
-      } else if (!r.ok) throw new Error((await r.json()).error || 'Failed');
-      store.set('stories-name', els.name.value);
-      els.text.value = ''; els.msg.textContent = 'Thanks! Your review is up.';
-      loadReviews();
-    } catch (err) {
-      els.msg.className = 'form-msg err'; els.msg.textContent = 'Could not post: ' + err.message;
-    } finally { btn.disabled = false; }
-  });
-  setInterval(() => { if (!document.hidden) loadReviews(); }, 20000); // see other people's reviews
 
   /* ---------- boot ---------- */
   fetch('/videos.json').then((r) => r.json()).then((list) => {
