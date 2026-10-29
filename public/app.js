@@ -228,16 +228,20 @@
   }
   paintStars();
 
+  const localReviews = () => { try { return JSON.parse(store.get('stories-reviews') || '[]'); } catch { return []; } };
   let reviewReq = 0;
   async function loadReviews() {
     if (focused < 0) return;
     const id = videos[focused].id, req = ++reviewReq;
     try {
       const r = await fetch('/api/reviews?video=' + encodeURIComponent(id));
+      if (!r.ok) throw new Error('no backend');
       const data = await r.json();
       if (req !== reviewReq) return; // user rotated on
       renderReviews(data);
-    } catch { /* keep what we have */ }
+    } catch {
+      if (req === reviewReq) renderReviews(localReviews().filter((x) => x.videoId === id));
+    }
   }
   function renderReviews(data) {
     els.list.innerHTML = '';
@@ -282,7 +286,11 @@
     btn.disabled = true; els.msg.className = 'form-msg'; els.msg.textContent = 'Posting…';
     try {
       const r = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!r.ok) throw new Error((await r.json()).error || 'Failed');
+      if (r.status === 404 || r.status === 405) { // static hosting: keep it in this browser only
+        const all = localReviews();
+        all.push({ id: String(Date.now()), videoId: body.videoId, name: body.name.trim() || 'Anonymous', rating, text: body.text.trim().slice(0, 1000), createdAt: new Date().toISOString() });
+        store.set('stories-reviews', JSON.stringify(all));
+      } else if (!r.ok) throw new Error((await r.json()).error || 'Failed');
       store.set('stories-name', els.name.value);
       els.text.value = ''; els.msg.textContent = 'Thanks! Your review is up.';
       loadReviews();
@@ -293,7 +301,7 @@
   setInterval(() => { if (!document.hidden) loadReviews(); }, 20000); // see other people's reviews
 
   /* ---------- boot ---------- */
-  fetch('/api/videos').then((r) => r.json()).then((list) => {
+  fetch('/videos.json').then((r) => r.json()).then((list) => {
     videos = list;
     if (!videos.length) { els.empty.hidden = false; return; }
     build();

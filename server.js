@@ -6,10 +6,10 @@ const path = require('path');
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const PUBLIC = path.join(ROOT, 'public');
-const VIDEOS = path.join(ROOT, 'videos');
+const VIDEOS = path.join(PUBLIC, 'videos');
 const REVIEWS_FILE = path.join(ROOT, 'reviews.json');
-const POSTERS = path.join(ROOT, 'posters');
-const META_FILE = path.join(ROOT, 'videos.json'); // optional: [{ "file": "a.mp4", "title": "...", "description": "..." }]
+const POSTERS = path.join(PUBLIC, 'posters');
+const META_FILE = path.join(ROOT, 'videos-meta.json'); // optional titles: [{ "file": "a.mp4", "title": "...", "description": "..." }]
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
@@ -124,16 +124,6 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-  if (pathname.startsWith('/posters/')) {
-    const p = safeJoin(POSTERS, pathname.slice('/posters/'.length));
-    return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');
-  }
-
-  if (pathname.startsWith('/videos/')) {
-    const p = safeJoin(VIDEOS, pathname.slice('/videos/'.length));
-    return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');
-  }
-
   const p = safeJoin(PUBLIC, pathname === '/' ? 'index.html' : pathname.slice(1));
   return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');
 });
@@ -148,6 +138,11 @@ async function makePosters() {
       '-frames:v', '1', '-vf', 'scale=480:-2', '-q:v', '4', out], () => done()));
   }
 }
-makePosters();
+function writeManifest() { // static hosts (Vercel) read this instead of /api/videos
+  fs.writeFileSync(path.join(PUBLIC, 'videos.json'), JSON.stringify(listVideos(), null, 2));
+}
 
-server.listen(PORT, () => console.log(`Stories running at http://localhost:${PORT}`));
+module.exports = { makePosters, writeManifest };
+
+if (require.main === module) makePosters().then(writeManifest);
+if (require.main === module) server.listen(PORT, () => console.log(`Stories running at http://localhost:${PORT}`));
