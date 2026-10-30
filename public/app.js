@@ -1,222 +1,181 @@
 (() => {
   const $ = (id) => document.getElementById(id);
-  const ring = $('ring'), carousel = $('carousel'), video = $('video');
-  const els = {
-    empty: $('empty'),
-    player: $('player'), nowTitle: $('now-title'), nowSub: $('now-sub'),
-    prev: $('prev'), play: $('play'), next: $('next'), seek: $('seek'), cur: $('cur'), dur: $('dur'),
-    mute: $('mute'), volume: $('volume'),
-  };
+  const feed = $('feed'), muteBtn = $('mute'), empty = $('empty');
 
-  let videos = [], cards = [];
-  let pos = 0;            // unwrapped ring position (float while dragging)
-  let focused = -1;       // video at the front of the ring
-  let playing = -1;       // video loaded in the player
-  let seeking = false;
-  let autoMuted = false;  // muted only because the browser blocked sound
-  let frontSlot = -1;
-  let host = null;        // card currently showing the playing video
+  let videos = [], slides = [];
+  let active = -1;
+  let track;
+  let muted = false;       // user's choice
+  let autoMuted = false;   // muted only because the browser blocked sound
 
+  let likes = new Set();
+  try { likes = new Set(JSON.parse(localStorage.getItem('xs-likes') || '[]')); } catch (e) {}
+  const saveLikes = () => { try { localStorage.setItem('xs-likes', JSON.stringify([...likes])); } catch (e) {} };
+
+  const fit = (s, w, h) => { if (w && h) s.classList.toggle('land', w > h); }; // landscape videos stay uncropped
   const mod = (a, n) => ((a % n) + n) % n;
-  const fmt = (s) => {
-    if (!isFinite(s)) return '0:00';
-    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
-    return `${m}:${String(sec).padStart(2, '0')}`;
-  };
-  const fill = (input) => { input.style.setProperty('--p', (input.value - input.min) / (input.max - input.min) * 100 + '%'); };
+  const vid = (i) => slides[i].querySelector('video');
+  const icon = () => { muteBtn.textContent = (muted || autoMuted) ? '🔇' : '🔊'; };
 
-  /* ---------- carousel ---------- */
+  /* ---------- build ---------- */
   function build() {
-    ring.innerHTML = '';
-    const n = videos.length, m = n * Math.ceil(10 / n); // repeat videos so the ring is always full
-    cards = Array.from({ length: m }, (_, i) => {
-      const v = videos[i % n];
-      const c = document.createElement('button');
-      c.className = 'card'; c.type = 'button';
-      c.setAttribute('aria-label', `Play ${v.title}`);
-      let vid;
+    feed.innerHTML = '';
+    track = document.createElement('div'); track.className = 'track'; feed.appendChild(track);
+    slides = videos.map((v, i) => {
+      const s = document.createElement('div');
+      s.className = 'slide'; s.style.top = i * 100 + '%';
+      s.innerHTML = '<video playsinline preload="none"></video><div class="shade"></div><div class="num"></div>' +
+        '<div class="info"><div class="user"><div class="avatar"><span>X</span></div><span class="uname">xu.stories</span>' +
+        '<button class="follow" type="button">Follow</button></div><p class="cap"></p><div class="audio">♪ Original audio</div></div>' +
+        '<div class="actions"><button class="act like" type="button" aria-label="Like"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.600 0 5.800 3.700 4.200 7.300C19.500 16.400 12 21 12 21z"/></svg><span class="n"></span></button>' +
+        '<div class="art"></div></div>' +
+        '<div class="bar"><i></i></div><div class="flash"><svg viewBox="0 0 24 24"><path d="M7 4.500v15l13-7.500z"/></svg></div>';
+      const video = s.querySelector('video');
       if (v.poster) {
-        vid = document.createElement('img');
-        vid.src = v.poster; vid.loading = 'lazy'; vid.decoding = 'async'; vid.draggable = false; vid.alt = '';
-      } else {
-        vid = document.createElement('video');
-        vid.src = v.src + '#t=0.5'; vid.muted = true; vid.preload = 'metadata'; vid.playsInline = true;
+        video.poster = v.poster;
+        const im = new Image(); im.onload = () => fit(s, im.naturalWidth, im.naturalHeight); im.src = v.poster;
       }
-      const badge = document.createElement('div'); badge.className = 'badge'; badge.textContent = '▶';
-      vid.className = 'thumb';
-      c.append(vid, badge);
-      c.addEventListener('click', () => {
-        if (dragMoved) return;
-        if (c === host) toggle(); else choose(i, true);
+      video.addEventListener('loadedmetadata', () => fit(s, video.videoWidth, video.videoHeight));
+      s.querySelector('.num').textContent = '#' + v.n;
+      const cap = s.querySelector('.cap');
+      cap.textContent = v.caption || v.description || `Xu's Stories · Video ${v.n}`;
+      cap.addEventListener('click', () => cap.classList.toggle('open')); // tap to read the full caption
+      s.querySelector('.like').addEventListener('click', () => setLike(i, !likes.has(v.id)));
+      const fb = s.querySelector('.follow');
+      fb.addEventListener('click', () => { fb.classList.toggle('on'); fb.textContent = fb.classList.contains('on') ? 'Following' : 'Follow'; });
+      if (likes.has(v.id)) { s.querySelector('.like').classList.add('liked'); s.querySelector('.n').textContent = '1'; }
+      s.querySelector('video').draggable = false;
+      video.addEventListener('timeupdate', () => {
+        if (video.duration) s.querySelector('.bar i').style.width = video.currentTime / video.duration * 100 + '%';
       });
-      ring.appendChild(c);
-      return c;
+      video.addEventListener('ended', () => goTo(i + 1 < slides.length ? i + 1 : 0));
+      track.appendChild(s);
+      return s;
     });
-    layout();
+    setActive(0); place(false);
   }
 
-  function layout() {
-    const n = cards.length;
-    if (!n) return;
-    const w = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-w')) || 220;
-    const step = 360 / n;
-    const radius = n > 1 ? w * 0.98 / 2 / Math.tan(Math.PI / n) : 0;
-    cards.forEach((c, i) => { c.dataset.base = `rotateY(${i * step}deg) translateZ(${radius}px)`; });
-    ring.dataset.radius = radius;
-    focused = -1; frontSlot = -1; // force restyle
-    rotate();
+  /* ---------- paging (drag / wheel / keys) ---------- */
+  function setActive(i) {
+    if (i === active || i < 0) return;
+    active = i;
+    slides.forEach((s) => s.querySelector('.flash').classList.remove('show'));
+    slides.forEach((s, k) => { // only keep the neighbours loaded
+      const v = vid(k), near = Math.abs(k - i) <= 1;
+      if (near && !v.getAttribute('src')) v.src = videos[k].src;
+      if (!near && v.getAttribute('src') && Math.abs(k - i) > 2) { v.pause(); v.removeAttribute('src'); v.load(); }
+      if (k !== i) { v.pause(); }
+    });
+    const v = vid(i); v.currentTime = 0; v.muted = muted;
+    play(v);
   }
 
-  function rotate() {
-    const n = videos.length, m = cards.length, step = 360 / m, radius = +ring.dataset.radius || 0;
-    ring.style.transform = `translateZ(${-radius}px) rotateY(${-pos * step}deg)`;
-    const fs = mod(Math.round(pos), m), f = fs % n;
-    if (f !== focused) { focused = f; onFocus(); }
-    if (fs === frontSlot) return; // only restyle cards when the front card changes
-    frontSlot = fs;
-    cards.forEach((c, i) => {
-      const dist = Math.min(mod(i - fs, m), mod(fs - i, m));
-      c.classList.toggle('front', i === fs);
-      c.style.visibility = dist > m / 4 + 3 ? 'hidden' : ''; // skip painting cards on the far side
-      c.style.transform = c.dataset.base + (i === fs ? ' translateZ(50px) scale(1.22)' : '');
+  // Browsers block sound before the first click, so fall back to muted autoplay.
+  function play(v) {
+    v.play().catch(() => {
+      v.muted = true; autoMuted = true; icon();
+      v.play().catch(() => {});
     });
   }
 
-  function snapTo(i, n = cards.length) { // shortest way round to slot i (or to video i when n = videos.length)
-    let d = mod(i - Math.round(pos), n);
-    if (d > n / 2) d -= n;
-    pos = Math.round(pos) + d;
-    rotate();
-  }
-  const snapToVideo = (vi) => snapTo(vi, videos.length);
-
-  function choose(i, play) {
-    snapTo(i);
-    if (play) load(i % videos.length, true);
+  function toggle(i) {
+    const v = vid(i), f = slides[i].querySelector('.flash');
+    if (v.paused) play(v); else v.pause();
+    f.classList.toggle('show', v.paused);
   }
 
-  /* drag / wheel / keys */
-  let raf = 0, dragging = false, dragMoved = false, startX = 0, startPos = 0;
-  carousel.addEventListener('pointerdown', (e) => {
-    if (videos.length < 2) return;
-    dragging = true; dragMoved = false; startX = e.clientX; startPos = pos;
+  function setLike(i, on) {
+    const id = videos[i].id, btn = slides[i].querySelector('.like');
+    on ? likes.add(id) : likes.delete(id);
+    btn.classList.toggle('liked', on);
+    btn.querySelector('.n').textContent = on ? '1' : '';
+    saveLikes();
+  }
+  function heartPop(i, e) {
+    const r = slides[i].getBoundingClientRect(), p = document.createElement('div');
+    p.className = 'pop'; p.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.600 0 5.800 3.700 4.200 7.300C19.500 16.400 12 21 12 21z"/></svg>';
+    p.style.left = (e.clientX - r.left) + 'px'; p.style.top = (e.clientY - r.top) + 'px';
+    slides[i].appendChild(p); setTimeout(() => p.remove(), 850);
+  }
+  // single tap = pause / play, double tap = like
+  let lastTap = 0, tapTimer = 0;
+  function tap(e) {
+    const now = performance.now();
+    if (now - lastTap < 300) { clearTimeout(tapTimer); lastTap = 0; setLike(active, true); heartPop(active, e); return; }
+    lastTap = now;
+    tapTimer = setTimeout(() => toggle(active), 260);
+  }
+
+  function place(anim, dy = 0) {
+    track.classList.toggle('no-anim', !anim);
+    track.style.transform = `translateY(${-active * feed.clientHeight + dy}px)`;
+  }
+  function goTo(i) {
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    setActive(i); place(true);
+  }
+
+  let drag = null;
+  feed.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button, .cap')) return;
+    drag = { y: e.clientY, t: performance.now(), dy: 0, moved: false, id: e.pointerId };
   });
   window.addEventListener('pointermove', (e) => {
-    if (!dragging) return;
-    const dx = e.clientX - startX;
-    if (!dragMoved && Math.abs(dx) > 6) { dragMoved = true; ring.classList.add('no-anim'); carousel.classList.add('dragging'); }
-    if (dragMoved) { pos = startPos - dx / 120; if (!raf) raf = requestAnimationFrame(() => { raf = 0; rotate(); }); }
+    if (!drag || e.pointerId !== drag.id) return;
+    let dy = e.clientY - drag.y;
+    if (!drag.moved && Math.abs(dy) > 6) { drag.moved = true; feed.classList.add('dragging'); feed.setPointerCapture(e.pointerId); }
+    if (!drag.moved) return;
+    if ((active === 0 && dy > 0) || (active === slides.length - 1 && dy < 0)) dy *= 0.35; // rubber band at the ends
+    drag.dy = dy; place(false, dy);
   });
-  window.addEventListener('pointerup', () => {
-    if (!dragging) return;
-    dragging = false;
-    ring.classList.remove('no-anim'); carousel.classList.remove('dragging');
-    if (dragMoved) { pos = Math.round(pos); rotate(); setTimeout(() => { dragMoved = false; }, 0); }
-  });
-  let wheelLock = false;
-  carousel.addEventListener('wheel', (e) => {
-    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : 0;
-    if (!d || wheelLock || videos.length < 2) return;
+  const endDrag = (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const d = drag; drag = null; feed.classList.remove('dragging');
+    if (!d.moved) { tap(e); return; }
+    const v = d.dy / Math.max(1, performance.now() - d.t); // px per ms
+    const far = Math.abs(d.dy) > feed.clientHeight * 0.12 || Math.abs(v) > 0.35;
+    goTo(far ? active + (d.dy < 0 ? 1 : -1) : active);
+  };
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  let wheelLock = false, wheelTimer = 0;
+  feed.addEventListener('wheel', (e) => {
     e.preventDefault();
-    wheelLock = true; setTimeout(() => { wheelLock = false; }, 350);
-    pos = Math.round(pos) + Math.sign(d); rotate();
+    clearTimeout(wheelTimer);
+    wheelTimer = setTimeout(() => { wheelLock = false; }, 140); // unlocks once the trackpad inertia stops
+    if (wheelLock || Math.abs(e.deltaY) < 4) return;
+    wheelLock = true;
+    goTo(active + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
-  window.addEventListener('keydown', (e) => {
-    if (/INPUT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
-    if (e.key === 'ArrowRight') { pos = Math.round(pos) + 1; rotate(); }
-    else if (e.key === 'ArrowLeft') { pos = Math.round(pos) - 1; rotate(); }
-    else if (e.key === ' ' && playing >= 0 && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); toggle(); }
-  });
-  window.addEventListener('resize', layout);
 
-  /* ---------- player ---------- */
-  function mountVideo(card) {
-    if (host === card) return;
-    if (host) host.classList.remove('hosting');
-    host = card;
-    card.insertBefore(video, card.firstChild);
-    card.classList.add('hosting');
-  }
-  function load(i, autoplay) {
-    playing = i;
-    const v = videos[i];
-    mountVideo(cards[mod(Math.round(pos), cards.length)]);
-    video.src = v.src;
-    els.player.hidden = false;
-    els.nowTitle.textContent = `Video ${i + 1}`;
-    els.nowSub.textContent = `of ${videos.length}`;
-    if (autoplay) tryPlay();
-    syncPlay();
-  }
-  // Browsers block sound before the first click, so fall back to muted autoplay.
-  function tryPlay() {
-    video.play().catch(() => {
-      video.muted = true; autoMuted = true; els.mute.textContent = '🔇';
-      video.play().catch(() => {});
-    });
-  }
-  function step(d) {
-    if (!videos.length) return;
-    const base = playing >= 0 ? playing : focused;
-    const i = mod(base + d, videos.length);
-    snapToVideo(i); load(i, true);
-  }
-  function toggle() {
-    if (playing < 0) return load(focused, true);
-    video.paused ? video.play().catch(() => {}) : video.pause();
-  }
-  function syncPlay() {
-    const p = !video.paused && !video.ended;
-    els.play.textContent = p ? '⏸' : '▶';
-    els.play.setAttribute('aria-label', p ? 'Pause' : 'Play');
-    cards.forEach((c, k) => { c.querySelector('.badge').textContent = (c === host && p) ? '⏸' : '▶'; });
-  }
-  els.play.addEventListener('click', toggle);
-  els.prev.addEventListener('click', () => {
-    if (video.currentTime > 3) video.currentTime = 0; else step(-1); // like Spotify
+  /* ---------- controls ---------- */
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (autoMuted) { autoMuted = false; muted = false; } else muted = !muted;
+    if (active >= 0) vid(active).muted = muted;
+    icon();
   });
-  els.next.addEventListener('click', () => step(1));
-  video.addEventListener('click', toggle);
-  video.addEventListener('play', syncPlay);
-  video.addEventListener('pause', syncPlay);
-  video.addEventListener('ended', () => step(1));
-  video.addEventListener('loadedmetadata', () => { els.dur.textContent = fmt(video.duration); });
-  video.addEventListener('timeupdate', () => {
-    els.cur.textContent = fmt(video.currentTime);
-    if (!seeking && video.duration) { els.seek.value = video.currentTime / video.duration * 1000; fill(els.seek); }
-  });
-  els.seek.addEventListener('input', () => {
-    seeking = true; fill(els.seek);
-    if (video.duration) els.cur.textContent = fmt(els.seek.value / 1000 * video.duration);
-  });
-  els.seek.addEventListener('change', () => {
-    if (video.duration) video.currentTime = els.seek.value / 1000 * video.duration;
-    seeking = false;
-  });
-  els.volume.addEventListener('input', () => {
-    video.volume = els.volume.value / 100; video.muted = false; fill(els.volume);
-    els.mute.textContent = video.volume === 0 ? '🔇' : '🔊';
-  });
-  els.mute.addEventListener('click', () => {
-    video.muted = !video.muted; els.mute.textContent = video.muted ? '🔇' : '🔊';
-  });
-  video.volume = 0.8; fill(els.volume); fill(els.seek);
-
   window.addEventListener('pointerdown', () => { // first click allows sound again
-    if (autoMuted) { autoMuted = false; video.muted = false; els.mute.textContent = '🔊'; }
+    if (autoMuted) { autoMuted = false; if (active >= 0) vid(active).muted = muted; icon(); }
   }, { capture: true });
-
-  /* ---------- autoplay ---------- */
-  let autoTimer;
-  function onFocus() { // autoplay once the card has settled in front
-    clearTimeout(autoTimer);
-    autoTimer = setTimeout(() => { if (focused >= 0 && playing !== focused) load(focused, true); }, 450);
-  }
+  window.addEventListener('keydown', (e) => {
+    if (!slides.length) return;
+    if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); goTo(active + 1); }
+    else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); goTo(active - 1); }
+    else if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); toggle(active); }
+    else if (e.key === 'l') { setLike(active, !likes.has(videos[active].id)); }
+  });
+  window.addEventListener('resize', () => { if (active >= 0) place(false); });
 
   /* ---------- boot ---------- */
-  fetch('/videos.json').then((r) => r.json()).then((list) => {
-    videos = list;
-    if (!videos.length) { els.empty.hidden = false; return; }
-    build();
-  }).catch(() => { els.empty.hidden = false; els.empty.textContent = 'Could not load videos.'; });
+  Promise.all([
+    fetch('/videos.json').then((r) => r.json()),
+    fetch('/captions.json').then((r) => r.json()).catch(() => ({})),
+  ]).then(([list, caps]) => {
+    videos = list.map((v, k) => ({ ...v, n: k + 1, caption: (caps[v.id] || {}).caption, hidden: (caps[v.id] || {}).hidden }))
+      .filter((v) => !v.hidden);
+    if (!videos.length) { empty.hidden = false; return; }
+    build(); icon(); feed.focus({ preventScroll: true });
+  }).catch(() => { empty.hidden = false; empty.textContent = 'Could not load videos.'; });
 })();

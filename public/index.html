@@ -2,49 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Xu's Stories</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header class="top">
     <h1>Xu's Stories</h1>
-    <p>Click a video to play it right there. Drag, scroll or use ← → to spin the circle.</p>
+    <p>Scroll or swipe up and down inside the phone. ↑ ↓ keys work too.</p>
   </header>
 
-  <main>
-    <section class="carousel" id="carousel" aria-label="Video carousel">
-      <div class="ring" id="ring"></div>
-      <p class="empty" id="empty" hidden>No videos yet. Drop .mp4 / .webm files into the <code>videos</code> folder and refresh.</p>
-    </section>
-
-
+  <main class="stage">
+    <div class="phone" id="phone">
+      <div class="notch"></div>
+      <div class="head"><span>Drop</span></div>
+      <div class="feed" id="feed" tabindex="0" aria-label="Video feed"></div>
+      <button class="mute" id="mute" aria-label="Mute" title="Sound on / off">🔊</button>
+      <p class="empty" id="empty" hidden>No videos yet. Add .mp4 files to <code>public/videos</code> and run <code>node build.js</code>.</p>
+    </div>
   </main>
-
-  <footer class="player" id="player" hidden>
-    <div class="now">
-      <div class="now-title" id="now-title">—</div>
-      <div class="now-sub" id="now-sub"></div>
-    </div>
-    <div class="controls">
-      <div class="buttons">
-        <button id="prev" aria-label="Previous video" title="Previous">⏮</button>
-        <button id="play" class="play" aria-label="Play" title="Play / pause">▶</button>
-        <button id="next" aria-label="Next video" title="Next">⏭</button>
-      </div>
-      <div class="seek">
-        <span id="cur">0:00</span>
-        <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek">
-        <span id="dur">0:00</span>
-      </div>
-    </div>
-    <div class="vol">
-      <button id="mute" aria-label="Mute" title="Mute">🔊</button>
-      <input id="volume" type="range" min="0" max="100" value="80" aria-label="Volume">
-    </div>
-  </footer>
-
-  <div hidden><video id="video" playsinline preload="metadata"></video></div>
 
   <script src="app.js"></script>
 </body>
