@@ -273,3 +273,15 @@ code { background: #181723; padding: 2px 6px; border-radius: 6px; }
 .made-chip { display: flex; gap: 5px; align-items: baseline; font-size: .62rem; line-height: 1.25; white-space: nowrap; }
 .made-chip i { font-style: normal; color: var(--muted); }
 .made-chip b { font-weight: 700; }
+
+/* ---- back to the lab landing page ---- */
+.top { position: relative; }
+.back {
+  position: fixed; left: max(14px, 2vw); top: 12px; z-index: 20; text-decoration: none; color: #14121c; background: #fbf3dc;
+  border: 3px solid #14121c; border-radius: 999px; padding: 6px 14px; font: 700 .85rem/1 "Trebuchet MS", system-ui, sans-serif;
+  box-shadow: 3px 3px 0 #14121c; transition: transform .12s, box-shadow .12s;
+}
+.back:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #14121c; background: #fff; }
+.back:active { transform: translate(3px, 3px); box-shadow: 0 0 0 #14121c; }
+.back:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 3px; }
+@media (max-width: 700px) { .back { position: static; display: inline-block; margin-bottom: 8px; } }

@@ -84,6 +84,13 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/api/videos' && req.method === 'GET') return send(res, 200, listVideos());
   if (reviewsApi(req, res, url)) return;
 
+  // Same layout as the staging lab: /lab is the landing page, /lab/stories is this site.
+  if (/^\/lab\/?$/.test(pathname)) return serveFile(req, res, path.join(ROOT, 'landing-preview', 'index.html'));
+  if (/^\/lab\/stories\/?$/.test(pathname)) {
+    return fs.readFile(path.join(PUBLIC, 'index.html'), 'utf8', (err, html) =>
+      err ? send(res, 404, 'Not found', 'text/plain') : send(res, 200, html.replace('<head>', '<head>\n  <base href="/">'), MIME['.html']));
+  }
+
   const p = safeJoin(PUBLIC, pathname === '/' ? 'index.html' : pathname.slice(1));
   return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');
 });

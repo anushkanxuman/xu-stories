@@ -34,8 +34,8 @@
     const t = card('TIME HERE');
     t.append(el('div', 'st-big', F(ms)), el('p', 'st-sub', 'Only counts while you are really here.'));
 
-    // THIS REEL
-    const r = card('THIS REEL', cur ? el('span', 'live', '#' + cur.video.n) : null);
+    // THIS DROP
+    const r = card('THIS DROP', cur ? el('span', 'live', '#' + cur.video.n) : null);
     if (cur) {
       const id = cur.video.id, w = window.dropTime ? window.dropTime.watch(id) : { pct: 0, done: 0 };
       r.append(el('div', 'st-big', F(window.dropTime ? window.dropTime.videoMs(id) : 0)),

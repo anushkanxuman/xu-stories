@@ -8,6 +8,7 @@
 </head>
 <body>
   <header class="top">
+    <a class="back" id="back" href="/lab" hidden>&larr; Back to Lab</a>
     <h1>Xu's Stories</h1>
     <p>YOUR FEED, YOUR VERDICT. Scroll the phone, then judge the drop.</p>
   </header>
@@ -20,7 +21,7 @@
         <div class="notch"></div>
         <div class="head"><span>Drop</span></div>
         <div class="feed" id="feed" tabindex="0" aria-label="Video feed"></div>
-        <button class="eye" id="eye" aria-label="How this reel is made" title="How it's made" hidden>👁</button>
+        <button class="eye" id="eye" aria-label="How this drop is made" title="How it's made" hidden>👁</button>
         <div class="made" id="made" hidden role="dialog" aria-label="How it's made"></div>
         <button class="mute" id="mute" aria-label="Mute" title="Sound on / off">🔊</button>
         <p class="empty" id="empty" hidden>No videos yet. Add .mp4 files to <code>public/videos</code> and run <code>node build.js</code>.</p>
@@ -39,5 +40,6 @@
   <script src="timing.js"></script>
   <script src="review.js"></script>
   <script src="stats.js"></script>
+  <script>if (location.pathname.indexOf('/lab/') === 0) document.getElementById('back').hidden = false; // only where the landing page exists</script>
 </body>
 </html>
