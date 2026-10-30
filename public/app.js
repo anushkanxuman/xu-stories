@@ -1,5 +1,6 @@
 (() => {
   const $ = (id) => document.getElementById(id);
+  window.dropNums = /[?&]nums\b/.test(location.search); // #N video numbers are hidden unless the URL has ?nums=1
   const feed = $('feed'), muteBtn = $('mute'), empty = $('empty');
 
   let videos = [], slides = [];
@@ -30,7 +31,7 @@
         const im = new Image(); im.onload = () => fit(s, im.naturalWidth, im.naturalHeight); im.src = v.poster;
       }
       video.addEventListener('loadedmetadata', () => fit(s, video.videoWidth, video.videoHeight));
-      s.querySelector('.num').textContent = '#' + v.n;
+      const num = s.querySelector('.num'); num.textContent = '#' + v.n; num.hidden = !window.dropNums;
       const cap = s.querySelector('.cap');
       cap.textContent = v.caption || v.description || `Xu's Stories · Video ${v.n}`;
       cap.addEventListener('click', () => cap.classList.toggle('open')); // tap to read the full caption
@@ -200,12 +201,13 @@
 
   /* ---------- boot ---------- */
   Promise.all([
-    fetch('/videos.json').then((r) => r.json()),
-    fetch('/captions.json').then((r) => r.json()).catch(() => ({})),
-    fetch('/made-with.json').then((r) => r.json()).catch(() => null),
+    fetch((window.DROP_BASE || '/') + 'videos.json').then((r) => r.json()),
+    fetch((window.DROP_BASE || '/') + 'captions.json').then((r) => r.json()).catch(() => ({})),
+    fetch((window.DROP_BASE || '/') + 'made-with.json').then((r) => r.json()).catch(() => null),
   ]).then(([list, caps, mw]) => {
     if (mw) madeCfg = { types: mw.types || {}, groups: mw.groups || [], videos: mw.videos || {} };
-    videos = list.map((v, k) => ({ ...v, n: k + 1, caption: (caps[v.id] || {}).caption, hidden: (caps[v.id] || {}).hidden }))
+    const at = (u) => (u ? (window.DROP_BASE || '/') + u.replace(/^\//, '') : u); // lets the site live under a sub-path (staging)
+    videos = list.map((v, k) => ({ ...v, src: at(v.src), poster: at(v.poster), n: k + 1, caption: (caps[v.id] || {}).caption, hidden: (caps[v.id] || {}).hidden }))
       .filter((v) => !v.hidden);
     if (!videos.length) { empty.hidden = false; return; }
     build(); icon(); refreshEye(); feed.focus({ preventScroll: true });

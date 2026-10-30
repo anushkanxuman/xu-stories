@@ -35,7 +35,7 @@
     t.append(el('div', 'st-big', F(ms)), el('p', 'st-sub', 'Only counts while you are really here.'));
 
     // THIS DROP
-    const r = card('THIS DROP', cur ? el('span', 'live', '#' + cur.video.n) : null);
+    const r = card('THIS DROP', cur && window.dropNums ? el('span', 'live', '#' + cur.video.n) : null);
     if (cur) {
       const id = cur.video.id, w = window.dropTime ? window.dropTime.watch(id) : { pct: 0, done: 0 };
       r.append(el('div', 'st-big', F(window.dropTime ? window.dropTime.videoMs(id) : 0)),
@@ -75,7 +75,7 @@
   document.addEventListener('drop:time', soon);
   document.addEventListener('timeupdate', (e) => { if (e.target.tagName === 'VIDEO' && cur) { const t = Date.now(); if (t - (render.lastWatch || 0) > 1000) { render.lastWatch = t; soon(); } } }, true);
 
-  fetch('/review-config.json').then((r) => r.json()).then((c) => { if (c.pace) pace = c.pace; soon(); }).catch(() => {});
+  fetch((window.DROP_BASE || '/') + 'review-config.json').then((r) => r.json()).then((c) => { if (c.pace) pace = c.pace; soon(); }).catch(() => {});
   const loadCommunity = () => fetch('/api/reviews/stats').then((r) => (r.ok ? r.json() : null)).then((j) => { community = j; soon(); }).catch(() => {});
   loadCommunity(); setInterval(loadCommunity, 60000);
 })();

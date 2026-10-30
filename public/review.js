@@ -237,7 +237,7 @@
     const nameBtn = el('button', { class: 'ghost name-chip', type: 'button', title: 'Change your name', text: nick ? '👤 ' + nick : '+ ADD NAME', onclick: () => renderWelcome(true) });
 
     const head = el('div', { class: 'rv-head' },
-      el('div', { class: 'rv-title' }, el('h2', { text: `VIDEO #${pad(entry.n)}` }), el('span', { class: 'rv-pos', text: `${index + 1} / ${total}` }), nameBtn, resBtn),
+      el('div', { class: 'rv-title' }, el('h2', { text: window.dropNums ? `VIDEO #${pad(entry.n)}` : 'THIS DROP' }), el('span', { class: 'rv-pos', text: `${index + 1} / ${total}` }), nameBtn, resBtn),
       el('div', { class: 'rv-sub' }, el('p', { class: 'rv-micro', text: cfg.microcopy[index % cfg.microcopy.length] }), el('div', { class: 'rv-stats' })),
       el('div', { class: 'rv-prog' }, el('i')));
 
@@ -389,7 +389,7 @@
     const row = (r, extra, noCaption) => {
       const i = idxOf(r.videoId);
       return el('li', {}, el('button', { type: 'button', title: 'Go to this video', onclick: () => { if (i >= 0) window.drop.goTo(i); showReview(); } },
-        el('span', { class: 'n', text: '#' + r.n }), noCaption ? null : el('span', { class: 't', text: capOf(r.videoId) }), extra));
+        window.dropNums ? el('span', { class: 'n', text: '#' + r.n }) : null, noCaption && window.dropNums ? null : el('span', { class: 't', text: capOf(r.videoId) }), extra));
     };
     const { reacted, submitted } = counts();
     const secs = [el('div', { class: 'rv-head res' },
@@ -484,7 +484,7 @@
   async function init() {
     try {
       const [c, saved] = await Promise.all([
-        fetch('/review-config.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+        fetch((window.DROP_BASE || '/') + 'review-config.json').then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
         adapter.getAll().catch(() => []),
         adapter.init().catch(() => {}), // finds out whether a backend exists
       ]);
