@@ -8,10 +8,6 @@
   let muted = false;       // user's choice
   let autoMuted = false;   // muted only because the browser blocked sound
 
-  let likes = new Set();
-  try { likes = new Set(JSON.parse(localStorage.getItem('xs-likes') || '[]')); } catch (e) {}
-  const saveLikes = () => { try { localStorage.setItem('xs-likes', JSON.stringify([...likes])); } catch (e) {} };
-
   const fit = (s, w, h) => { if (w && h) s.classList.toggle('land', w > h); }; // landscape videos stay uncropped
   const mod = (a, n) => ((a % n) + n) % n;
   const vid = (i) => slides[i].querySelector('video');
@@ -24,11 +20,9 @@
     slides = videos.map((v, i) => {
       const s = document.createElement('div');
       s.className = 'slide'; s.style.top = i * 100 + '%';
-      s.innerHTML = '<video playsinline preload="none"></video><div class="shade"></div><div class="num"></div>' +
-        '<div class="info"><div class="user"><div class="avatar"><span>X</span></div><span class="uname">xu.stories</span>' +
-        '<button class="follow" type="button">Follow</button></div><p class="cap"></p><div class="audio">♪ Original audio</div></div>' +
-        '<div class="actions"><button class="act like" type="button" aria-label="Like"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.600 0 5.800 3.700 4.200 7.300C19.500 16.400 12 21 12 21z"/></svg><span class="n"></span></button>' +
-        '<div class="art"></div></div>' +
+      s.innerHTML = '<video playsinline preload="none"></video><div class="shade"></div><div class="num"></div><span class="mark" hidden></span>' +
+        '<div class="info"><div class="user"><div class="avatar"><span>X</span></div><span class="uname">xu.stories</span></div>' +
+        '<p class="cap"></p><div class="audio">♪ Original audio</div></div>' +
         '<div class="bar"><i></i></div><div class="flash"><svg viewBox="0 0 24 24"><path d="M7 4.500v15l13-7.500z"/></svg></div>';
       const video = s.querySelector('video');
       if (v.poster) {
@@ -40,10 +34,6 @@
       const cap = s.querySelector('.cap');
       cap.textContent = v.caption || v.description || `Xu's Stories · Video ${v.n}`;
       cap.addEventListener('click', () => cap.classList.toggle('open')); // tap to read the full caption
-      s.querySelector('.like').addEventListener('click', () => setLike(i, !likes.has(v.id)));
-      const fb = s.querySelector('.follow');
-      fb.addEventListener('click', () => { fb.classList.toggle('on'); fb.textContent = fb.classList.contains('on') ? 'Following' : 'Follow'; });
-      if (likes.has(v.id)) { s.querySelector('.like').classList.add('liked'); s.querySelector('.n').textContent = '1'; }
       s.querySelector('video').draggable = false;
       video.addEventListener('timeupdate', () => {
         if (video.duration) s.querySelector('.bar i').style.width = video.currentTime / video.duration * 100 + '%';
@@ -68,6 +58,7 @@
     });
     const v = vid(i); v.currentTime = 0; v.muted = muted;
     play(v);
+    document.dispatchEvent(new CustomEvent('drop:active', { detail: { index: i, total: slides.length, video: videos[i] } }));
   }
 
   // Browsers block sound before the first click, so fall back to muted autoplay.
@@ -84,27 +75,7 @@
     f.classList.toggle('show', v.paused);
   }
 
-  function setLike(i, on) {
-    const id = videos[i].id, btn = slides[i].querySelector('.like');
-    on ? likes.add(id) : likes.delete(id);
-    btn.classList.toggle('liked', on);
-    btn.querySelector('.n').textContent = on ? '1' : '';
-    saveLikes();
-  }
-  function heartPop(i, e) {
-    const r = slides[i].getBoundingClientRect(), p = document.createElement('div');
-    p.className = 'pop'; p.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.8 8.2 3 4.5 6.6 4.5c2 0 3.7 1.1 5.4 3.1 1.7-2 3.4-3.1 5.4-3.1 3.600 0 5.800 3.700 4.200 7.300C19.500 16.400 12 21 12 21z"/></svg>';
-    p.style.left = (e.clientX - r.left) + 'px'; p.style.top = (e.clientY - r.top) + 'px';
-    slides[i].appendChild(p); setTimeout(() => p.remove(), 850);
-  }
-  // single tap = pause / play, double tap = like
-  let lastTap = 0, tapTimer = 0;
-  function tap(e) {
-    const now = performance.now();
-    if (now - lastTap < 300) { clearTimeout(tapTimer); lastTap = 0; setLike(active, true); heartPop(active, e); return; }
-    lastTap = now;
-    tapTimer = setTimeout(() => toggle(active), 260);
-  }
+  const tap = () => toggle(active); // single tap = pause / play
 
   function place(anim, dy = 0) {
     track.classList.toggle('no-anim', !anim);
@@ -161,21 +132,84 @@
   }, { capture: true });
   window.addEventListener('keydown', (e) => {
     if (!slides.length) return;
+    if (e.target.closest && e.target.closest('.review, input, textarea, select, [contenteditable]')) return; // typing and panel controls keep their keys
     if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); goTo(active + 1); }
     else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); goTo(active - 1); }
     else if (e.key === ' ' && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); toggle(active); }
-    else if (e.key === 'l') { setLike(active, !likes.has(videos[active].id)); }
   });
   window.addEventListener('resize', () => { if (active >= 0) place(false); });
+
+  /* ---------- small API for the review panel ---------- */
+  const api = window.drop = {
+    ready: false,
+    get videos() { return videos; },
+    get index() { return active; },
+    current() { // the video on screen, for the analytics
+      if (active < 0) return null;
+      const v = vid(active);
+      return { id: videos[active].id, el: v, t: v.currentTime, dur: v.duration };
+    },
+    get playing() { return active >= 0 && !vid(active).paused && !vid(active).ended; },
+    goTo,
+    burst(emoji) { // quick emoji pop on the video that is playing
+      if (active < 0) return;
+      const p = document.createElement('div');
+      p.className = 'pop'; p.textContent = emoji;
+      slides[active].appendChild(p); setTimeout(() => p.remove(), 900);
+    },
+    mark(id, emoji, status) { // small reaction chip next to the #N badge
+      const k = videos.findIndex((v) => v.id === id);
+      if (k < 0) return;
+      const m = slides[k].querySelector('.mark');
+      m.hidden = !emoji; m.textContent = emoji || ''; m.dataset.status = status || '';
+    },
+  };
+
+  /* ---------- how it's made (eye icon) ---------- */
+  const eye = $('eye'), made = $('made');
+  let madeCfg = { types: {}, groups: [], videos: {} };
+  const stepsFor = (v) => {
+    if (!v) return null;
+    const own = madeCfg.videos[v.n] || madeCfg.videos[v.id];
+    const g = madeCfg.groups.find((x) => v.n >= x.from && v.n <= x.to);
+    const pick = own || (g && g.type);
+    return typeof pick === 'string' ? madeCfg.types[pick] || null : (pick && pick.steps) || null;
+  };
+  function closeMade() { made.hidden = true; eye.classList.remove('on'); }
+  function refreshEye() {
+    closeMade();
+    eye.hidden = !stepsFor(videos[active]);
+  }
+  eye.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!made.hidden) { closeMade(); return; }
+    const v = videos[active], steps = stepsFor(v);
+    if (!steps) return;
+    made.replaceChildren();
+    steps.forEach((st) => { // one small chip per step: "Script · ChatGPT"
+      const r = document.createElement('span'); r.className = 'made-chip';
+      const a = document.createElement('i'); a.textContent = st.label;
+      const b = document.createElement('b'); b.textContent = st.tool;
+      r.append(a, b); made.appendChild(r);
+    });
+    made.hidden = false; eye.classList.add('on');
+  });
+  made.addEventListener('pointerdown', (e) => e.stopPropagation());
+  made.addEventListener('click', closeMade);
+  document.addEventListener('drop:active', refreshEye);
 
   /* ---------- boot ---------- */
   Promise.all([
     fetch('/videos.json').then((r) => r.json()),
     fetch('/captions.json').then((r) => r.json()).catch(() => ({})),
-  ]).then(([list, caps]) => {
+    fetch('/made-with.json').then((r) => r.json()).catch(() => null),
+  ]).then(([list, caps, mw]) => {
+    if (mw) madeCfg = { types: mw.types || {}, groups: mw.groups || [], videos: mw.videos || {} };
     videos = list.map((v, k) => ({ ...v, n: k + 1, caption: (caps[v.id] || {}).caption, hidden: (caps[v.id] || {}).hidden }))
       .filter((v) => !v.hidden);
     if (!videos.length) { empty.hidden = false; return; }
-    build(); icon(); feed.focus({ preventScroll: true });
+    build(); icon(); refreshEye(); feed.focus({ preventScroll: true });
+    api.ready = true;
+    document.dispatchEvent(new CustomEvent('drop:ready', { detail: { videos } }));
   }).catch(() => { empty.hidden = false; empty.textContent = 'Could not load videos.'; });
 })();

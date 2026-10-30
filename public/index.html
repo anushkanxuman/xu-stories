@@ -9,19 +9,35 @@
 <body>
   <header class="top">
     <h1>Xu's Stories</h1>
-    <p>Scroll or swipe up and down inside the phone. ↑ ↓ keys work too.</p>
+    <p>YOUR FEED, YOUR VERDICT. Scroll the phone, then judge the drop.</p>
   </header>
 
-  <main class="stage">
-    <div class="phone" id="phone">
-      <div class="notch"></div>
-      <div class="head"><span>Drop</span></div>
-      <div class="feed" id="feed" tabindex="0" aria-label="Video feed"></div>
-      <button class="mute" id="mute" aria-label="Mute" title="Sound on / off">🔊</button>
-      <p class="empty" id="empty" hidden>No videos yet. Add .mp4 files to <code>public/videos</code> and run <code>node build.js</code>.</p>
+  <main class="layout">
+    <aside class="stats" id="stats" aria-label="Your stats" aria-live="off"></aside>
+
+    <div class="stage">
+      <div class="phone" id="phone">
+        <div class="notch"></div>
+        <div class="head"><span>Drop</span></div>
+        <div class="feed" id="feed" tabindex="0" aria-label="Video feed"></div>
+        <button class="eye" id="eye" aria-label="How this reel is made" title="How it's made" hidden>👁</button>
+        <div class="made" id="made" hidden role="dialog" aria-label="How it's made"></div>
+        <button class="mute" id="mute" aria-label="Mute" title="Sound on / off">🔊</button>
+        <p class="empty" id="empty" hidden>No videos yet. Add .mp4 files to <code>public/videos</code> and run <code>node build.js</code>.</p>
+      </div>
     </div>
+
+    <aside class="review" id="review" aria-label="Review panel">
+      <div class="rv-body" id="rv-body">
+        <div class="skel" aria-hidden="true"><i></i><i></i><i></i></div>
+      </div>
+      <div class="rv-bar" id="rv-bar"></div>
+    </aside>
   </main>
 
   <script src="app.js"></script>
+  <script src="timing.js"></script>
+  <script src="review.js"></script>
+  <script src="stats.js"></script>
 </body>
 </html>

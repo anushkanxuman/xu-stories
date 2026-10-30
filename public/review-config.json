@@ -1,0 +1,762 @@
+{
+ "microcopy": [
+  "Your taste is under investigation. 👁️",
+  "One tap. Zero commitment. Maximum opinions.",
+  "You can hurt the video's feelings. It has none.",
+  "Respectfully, we're all critics now.",
+  "The creative department is listening."
+ ],
+ "categories": {
+  "fun": {
+   "heading": "BE SO FR RN.",
+   "prompt": "Did we cook or burn the kitchen?",
+   "options": [
+    {
+     "key": "fun.deceased",
+     "label": "I'M DECEASED",
+     "emoji": "😭",
+     "meaning": "Extremely funny. It made me laugh a lot.",
+     "tone": "pos"
+    },
+    {
+     "key": "fun.relatable",
+     "label": "WHY IS THIS ME?",
+     "emoji": "🫠",
+     "meaning": "Very relatable. I've been there.",
+     "tone": "pos"
+    },
+    {
+     "key": "fun.ate",
+     "label": "OKAY, ATE",
+     "emoji": "🔥",
+     "meaning": "It worked really well. They nailed it.",
+     "tone": "pos"
+    },
+    {
+     "key": "fun.notfeeling",
+     "label": "NOT FEELING IT",
+     "emoji": "😐",
+     "meaning": "It didn't work for me.",
+     "tone": "neg"
+    }
+   ]
+  },
+  "emo": {
+   "heading": "DID WE FEEL FEELINGS? 🥹",
+   "prompt": "Did it hit, or are we being dramatic?",
+   "options": [
+    {
+     "key": "emo.heart",
+     "label": "MY HEART???",
+     "emoji": "🥹",
+     "meaning": "It really moved me.",
+     "tone": "pos"
+    },
+    {
+     "key": "emo.cute",
+     "label": "WAIT, THAT WAS CUTE",
+     "emoji": "🥰",
+     "meaning": "Sweet and charming.",
+     "tone": "pos"
+    },
+    {
+     "key": "emo.almost",
+     "label": "ALMOST GOT ME",
+     "emoji": "😶",
+     "meaning": "Close to moving me, but not quite.",
+     "tone": "neutral"
+    },
+    {
+     "key": "emo.nope",
+     "label": "DIDN'T CONNECT",
+     "emoji": "😐",
+     "meaning": "I didn't feel anything.",
+     "tone": "neg"
+    }
+   ]
+  },
+  "skl": {
+   "heading": "THE BAG OR THE DELUSION? 💸",
+   "prompt": "Does the idea actually make sense to you?",
+   "options": [
+    {
+     "key": "skl.interested",
+     "label": "WAIT, I'M INTERESTED",
+     "emoji": "👀",
+     "meaning": "This caught my attention. I'd look into it.",
+     "tone": "pos"
+    },
+    {
+     "key": "skl.bag",
+     "label": "GET THAT BAG",
+     "emoji": "💰",
+     "meaning": "Go earn that money. Good idea.",
+     "tone": "pos"
+    },
+    {
+     "key": "skl.notyet",
+     "label": "NOT CONVINCED YET",
+     "emoji": "🤔",
+     "meaning": "Interesting, but I need more proof.",
+     "tone": "neutral"
+    },
+    {
+     "key": "skl.makesense",
+     "label": "MAKE IT MAKE SENSE",
+     "emoji": "🤨",
+     "meaning": "I don't see how this would work.",
+     "tone": "neg"
+    }
+   ]
+  },
+  "fri": {
+   "heading": "DID WE JUST BECOME BESTIES?",
+   "prompt": "Would you actually connect with someone like this?",
+   "options": [
+    {
+     "key": "fri.needthis",
+     "label": "I NEED THIS",
+     "emoji": "🙏",
+     "meaning": "I want this in my life.",
+     "tone": "pos"
+    },
+    {
+     "key": "fri.mytype",
+     "label": "THAT'S MY TYPE OF HUMAN",
+     "emoji": "🤝",
+     "meaning": "I'd get along with this kind of person.",
+     "tone": "pos"
+    },
+    {
+     "key": "fri.stilllooking",
+     "label": "STILL LOOKING, BESTIE",
+     "emoji": "🫤",
+     "meaning": "Not quite what I'm looking for yet.",
+     "tone": "neutral"
+    },
+    {
+     "key": "fri.notmine",
+     "label": "NOT MY PEOPLE",
+     "emoji": "🙅",
+     "meaning": "I wouldn't connect with this kind of person.",
+     "tone": "neg"
+    }
+   ]
+  },
+  "car": {
+   "heading": "LINKEDIN COULD NEVER 💀",
+   "prompt": "Does this feel relevant to someone in this situation?",
+   "options": [
+    {
+     "key": "car.useful",
+     "label": "ACTUALLY USEFUL",
+     "emoji": "✅",
+     "meaning": "This is helpful advice.",
+     "tone": "pos"
+    },
+    {
+     "key": "car.listening",
+     "label": "I'M LISTENING",
+     "emoji": "👂",
+     "meaning": "You have my attention.",
+     "tone": "pos"
+    },
+    {
+     "key": "car.context",
+     "label": "NEED MORE CONTEXT",
+     "emoji": "🧐",
+     "meaning": "I'd need to know more first.",
+     "tone": "neutral"
+    },
+    {
+     "key": "car.speech",
+     "label": "ANOTHER MOTIVATIONAL SPEECH?",
+     "emoji": "🥱",
+     "meaning": "Feels like generic advice.",
+     "tone": "neg"
+    }
+   ]
+  },
+  "gen": {
+   "heading": "BE SO FR… HOW WAS IT?",
+   "prompt": "One tap. Zero commitment. Maximum opinions.",
+   "options": [
+    {
+     "key": "gen.ate",
+     "label": "ATE.",
+     "emoji": "🔥",
+     "meaning": "Did a really good job. Absolutely nailed it.",
+     "tone": "pos"
+    },
+    {
+     "key": "gen.lowkey",
+     "label": "LOWKEY FIRE",
+     "emoji": "✨",
+     "meaning": "Quietly impressive. Better than expected.",
+     "tone": "pos"
+    },
+    {
+     "key": "gen.idea",
+     "label": "THE IDEA IS THERE",
+     "emoji": "💡",
+     "meaning": "The concept has potential but could be improved.",
+     "tone": "neutral"
+    },
+    {
+     "key": "gen.nothing",
+     "label": "IT'S GIVING NOTHING",
+     "emoji": "😶",
+     "meaning": "It didn't really impress me.",
+     "tone": "neg"
+    }
+   ]
+  }
+ },
+ "style": {
+  "heading": "THE AESTHETIC POLICE 🎨",
+  "prompt": "This one's {style}. How's the look?",
+  "options": [
+   {
+    "key": "sty.ate",
+    "label": "THE LOOK ATE",
+    "emoji": "🎨",
+    "meaning": "The visual style is excellent.",
+    "tone": "pos"
+   },
+   {
+    "key": "sty.lowkey",
+    "label": "LOWKEY FIRE",
+    "emoji": "✨",
+    "meaning": "Quietly impressive. Better than expected.",
+    "tone": "pos"
+   },
+   {
+    "key": "sty.notgiving",
+    "label": "IT'S NOT GIVING",
+    "emoji": "😬",
+    "meaning": "The style isn't working for me.",
+    "tone": "neg"
+   },
+   {
+    "key": "sty.wrong",
+    "label": "WRONG LOOK FOR THIS STORY",
+    "emoji": "🔄",
+    "meaning": "The story would suit a different style.",
+    "tone": "neg"
+   }
+  ]
+ },
+ "clarity": {
+  "heading": "DID IT LAND?",
+  "prompt": "After watching: was the point clear?",
+  "options": [
+   {
+    "key": "clr.got",
+    "label": "GOT IT IMMEDIATELY",
+    "emoji": "⚡",
+    "meaning": "The point was clear straight away.",
+    "tone": "pos"
+   },
+   {
+    "key": "clr.kinda",
+    "label": "KIND OF GOT IT",
+    "emoji": "🙂",
+    "meaning": "I mostly understood it.",
+    "tone": "neutral"
+   },
+   {
+    "key": "clr.think",
+    "label": "HAD TO THINK ABOUT IT",
+    "emoji": "🤔",
+    "meaning": "I got it, but it took a moment.",
+    "tone": "neutral"
+   },
+   {
+    "key": "clr.point",
+    "label": "WAIT, WHAT WAS THE POINT?",
+    "emoji": "😵‍💫",
+    "meaning": "I didn't understand the message.",
+    "tone": "neg"
+   }
+  ]
+ },
+ "fix": {
+  "heading": "YOU GET ONE FIX. WHAT'S CHANGING?",
+  "detailPlaceholder": "Tell us more (optional)",
+  "options": [
+   {
+    "key": "fix.hook",
+    "label": "THE OPENING / HOOK",
+    "emoji": "🎣",
+    "meaning": "The first few seconds.",
+    "tone": "fix"
+   },
+   {
+    "key": "fix.visuals",
+    "label": "THE VISUALS",
+    "emoji": "🖼️",
+    "meaning": "How it looks.",
+    "tone": "fix"
+   },
+   {
+    "key": "fix.audio",
+    "label": "THE MUSIC / AUDIO",
+    "emoji": "🎧",
+    "meaning": "The sound, music or voice.",
+    "tone": "fix"
+   },
+   {
+    "key": "fix.pacing",
+    "label": "THE PACING",
+    "emoji": "⏱️",
+    "meaning": "How fast or slow it moves.",
+    "tone": "fix"
+   },
+   {
+    "key": "fix.text",
+    "label": "THE TEXT / CAPTION",
+    "emoji": "💬",
+    "meaning": "The words on screen or in the caption.",
+    "tone": "fix"
+   },
+   {
+    "key": "fix.nothing",
+    "label": "NOTHING. LET THEM COOK.",
+    "emoji": "👨‍🍳",
+    "meaning": "Leave it exactly as it is.",
+    "tone": "none"
+   }
+  ]
+ },
+ "tea": {
+  "heading": "THE GROUP CHAT IS OPEN ☕",
+  "placeholder": "Don't be fake nice. What's the tea? 👀",
+  "starters": [
+   "Not gonna lie…",
+   "The part that ate was…",
+   "The part that lost me was…",
+   "What didn't work was…",
+   "I'd honestly cut…",
+   "Wait, imagine if…",
+   "My brutally honest take…"
+  ],
+  "moods": {
+   "prompt": "What's the mood of your comment?",
+   "options": [
+    {
+     "key": "tea.good",
+     "label": "GOOD TEA",
+     "emoji": "😍",
+     "meaning": "Mostly praise. I liked it.",
+     "tone": "pos"
+    },
+    {
+     "key": "tea.mixed",
+     "label": "MIXED TEA",
+     "emoji": "🤷",
+     "meaning": "Some good, some not.",
+     "tone": "neutral"
+    },
+    {
+     "key": "tea.bad",
+     "label": "BAD TEA",
+     "emoji": "😬",
+     "meaning": "Mostly criticism. It needs work.",
+     "tone": "neg"
+    }
+   ]
+  }
+ },
+ "secondaryPrompts": {
+  "fri": "Would you actually connect with someone like this?",
+  "fun": "Is this relatable, or are we reaching?"
+ },
+ "videos": {
+  "Animated_character_connecting_on…_799c83f4.mp4": {
+   "primary": "fri",
+   "n": 1
+  },
+  "Animated_music_video_production_…_5c00badf.mp4": {
+   "primary": "fri",
+   "also": [
+    "emo"
+   ],
+   "n": 2
+  },
+  "Animator_finding_clients_online_7b64ac2b.mp4": {
+   "primary": "skl",
+   "n": 3
+  },
+  "Creating_animated_video_for_Xuman_0f144e47.mp4": {
+   "primary": "fri",
+   "n": 4
+  },
+  "Creating_animated_video_with_cha…_e15476e5.mp4": {
+   "primary": "fri",
+   "also": [
+    "fun"
+   ],
+   "n": 5
+  },
+  "Friends_discussing_earning_money_423ea5c4.mp4": {
+   "primary": "skl",
+   "n": 6
+  },
+  "gemini_generated_video_6a3a6a7a.mp4": {
+   "primary": "car",
+   "also": [
+    "fri"
+   ],
+   "secondary": "fri",
+   "n": 7
+  },
+  "gemini_generated_video_17f62a62.mp4": {
+   "primary": "car",
+   "also": [
+    "skl"
+   ],
+   "n": 8
+  },
+  "gemini_generated_video_18e646fc.mp4": {
+   "primary": "skl",
+   "also": [
+    "car"
+   ],
+   "n": 9
+  },
+  "gemini_generated_video_71ad858c.mp4": {
+   "primary": "car",
+   "n": 10
+  },
+  "gemini_generated_video_472c32b7.mp4": {
+   "primary": "skl",
+   "n": 11
+  },
+  "gemini_generated_video_783ab8c2.mp4": {
+   "primary": "skl",
+   "n": 12
+  },
+  "gemini_generated_video_56681968.mp4": {
+   "primary": "skl",
+   "n": 13
+  },
+  "gemini_generated_video_a662eec5.mp4": {
+   "primary": "skl",
+   "also": [
+    "fun"
+   ],
+   "secondary": "fun",
+   "n": 14
+  },
+  "gemini_generated_video_cd990185.mp4": {
+   "primary": "skl",
+   "also": [
+    "emo"
+   ],
+   "n": 16
+  },
+  "gemini_generated_video_ed85d5dd.mp4": {
+   "primary": "skl",
+   "also": [
+    "car"
+   ],
+   "n": 17
+  },
+  "Girl_learning_language_on_video_0e76cfbd.mp4": {
+   "primary": "fri",
+   "n": 18
+  },
+  "Man_imagining_future_from_text_925993ce.mp4": {
+   "primary": "fun",
+   "n": 19
+  },
+  "Man_solving_futuristic_mysteries_c40f5901.mp4": {
+   "primary": "skl",
+   "n": 20
+  },
+  "Sofia_drawing_in_sketchbook_5c261a6c.mp4": {
+   "primary": "emo",
+   "also": [
+    "fri"
+   ],
+   "n": 21
+  },
+  "Sofia_finds_phone_charm_friend_ad727ead.mp4": {
+   "primary": "fri",
+   "n": 22
+  },
+  "WhatsApp Video 2026-10-28 at 15.41.07.mp4": {
+   "primary": "fri",
+   "n": 23
+  },
+  "WhatsApp Video 2026-10-28 at 15.41.20.mp4": {
+   "primary": "gen",
+   "n": 24
+  },
+  "WhatsApp Video 2026-10-28 at 15.41.21.mp4": {
+   "primary": "gen",
+   "n": 25
+  },
+  "WhatsApp Video 2026-10-28 at 15.41.25.mp4": {
+   "primary": "fri",
+   "also": [
+    "fun"
+   ],
+   "n": 26
+  },
+  "WhatsApp Video 2026-10-28 at 15.41.27 (1).mp4": {
+   "primary": "skl",
+   "n": 27
+  },
+  "WhatsApp Video 2026-10-28 at 17.25.05.mp4": {
+   "primary": "fri",
+   "also": [
+    "emo"
+   ],
+   "n": 28
+  },
+  "WhatsApp Video 2026-10-28 at 17.25.06.mp4": {
+   "primary": "fri",
+   "n": 29
+  },
+  "WhatsApp Video 2026-10-28 at 17.43.40.mp4": {
+   "primary": "fri",
+   "also": [
+    "fun"
+   ],
+   "n": 30
+  },
+  "WhatsApp Video 2026-10-28 at 18.48.02.mp4": {
+   "primary": "fri",
+   "n": 31
+  },
+  "WhatsApp Video 2026-10-28 at 18.53.53.mp4": {
+   "primary": "gen",
+   "n": 32
+  },
+  "WhatsApp Video 2026-10-28 at 19.03.54.mp4": {
+   "primary": "fri",
+   "also": [
+    "emo"
+   ],
+   "n": 33
+  },
+  "Woman_exploring_surreal_dreamscape_1791b0fa.mp4": {
+   "primary": "fri",
+   "n": 34
+  },
+  "Woman_planning_Europe_trip_a37192e0.mp4": {
+   "primary": "fri",
+   "n": 36
+  },
+  "Xuman_animation_video_story_c9b7dc26.mp4": {
+   "primary": "skl",
+   "also": [
+    "car"
+   ],
+   "n": 37
+  },
+  "zz38_sofia-comic-countdown.mp4": {
+   "primary": "fun",
+   "n": 38,
+   "style": "Comic"
+  },
+  "zz39_sofia-pixel-nobody-me.mp4": {
+   "primary": "fun",
+   "n": 39,
+   "style": "Pixel"
+  },
+  "zz40_sofia-cartoon-rating.mp4": {
+   "primary": "fun",
+   "n": 40,
+   "style": "Cartoon"
+  },
+  "zz41_sofia-rooftop-before-after.mp4": {
+   "primary": "skl",
+   "also": [
+    "fun"
+   ],
+   "n": 41,
+   "style": "Realistic"
+  },
+  "zz42_sofia-lineart-asmr.mp4": {
+   "primary": "fun",
+   "n": 42,
+   "style": "Line art"
+  },
+  "zz43_sofia-boardwalk-expectation.mp4": {
+   "primary": "fun",
+   "also": [
+    "skl"
+   ],
+   "n": 43,
+   "style": "Retro 90s"
+  },
+  "zz44_sofia-cowork-listicle.mp4": {
+   "primary": "skl",
+   "also": [
+    "fun"
+   ],
+   "n": 44,
+   "style": "3D"
+  },
+  "zz45_sofia-felt-dayinthelife.mp4": {
+   "primary": "gen",
+   "n": 45,
+   "style": "Felt"
+  },
+  "zz46_sofia-kl-cartoon-mom.mp4": {
+   "primary": "fun",
+   "also": [
+    "car"
+   ],
+   "n": 46,
+   "style": "Cartoon"
+  },
+  "zz47_sofia-kl-cowork-3types.mp4": {
+   "primary": "fun",
+   "n": 47,
+   "style": "3D"
+  },
+  "zz48_sofia-kl-rooftop-makessense.mp4": {
+   "primary": "gen",
+   "n": 48,
+   "style": "Realistic"
+  },
+  "zz49_sofia-kl-boardwalk-sundayreset.mp4": {
+   "primary": "gen",
+   "n": 49,
+   "style": "Retro 90s"
+  },
+  "zz50_sofia-sd-anime-plottwist.mp4": {
+   "primary": "gen",
+   "n": 50,
+   "style": "Anime"
+  },
+  "zz51_sofia-sd-clay-coldcoffee.mp4": {
+   "primary": "gen",
+   "n": 51,
+   "style": "Clay"
+  },
+  "zz52_sofia-sd-pixel-bosslevels.mp4": {
+   "primary": "fun",
+   "also": [
+    "skl"
+   ],
+   "n": 52,
+   "style": "Pixel"
+  },
+  "zz53_sofia-sd-comic-waitforit.mp4": {
+   "primary": "skl",
+   "also": [
+    "fun"
+   ],
+   "n": 53,
+   "style": "Comic"
+  },
+  "zz54_sofia-sd-lineart-day1-day30.mp4": {
+   "primary": "skl",
+   "also": [
+    "car"
+   ],
+   "n": 54,
+   "style": "Line art"
+  },
+  "zz55_sofia-ep1-full-v2.mp4": {
+   "primary": "skl",
+   "also": [
+    "fun"
+   ],
+   "secondary": "fun",
+   "n": 55
+  },
+  "zz56_sofia-seedance.mp4": {
+   "primary": "fun",
+   "also": [
+    "skl"
+   ],
+   "n": 56,
+   "style": "Cartoon"
+  },
+  "zz57_sofia-grok.mp4": {
+   "primary": "fun",
+   "also": [
+    "skl"
+   ],
+   "n": 57,
+   "style": "Cartoon"
+  },
+  "zz58_marcus-ep1.mp4": {
+   "primary": "fun",
+   "n": 58,
+   "style": "Realistic"
+  },
+  "zz59_priya-ep1.mp4": {
+   "primary": "fun",
+   "n": 59,
+   "style": "Line art"
+  },
+  "zz60_zay-ep1.mp4": {
+   "primary": "fun",
+   "also": [
+    "skl"
+   ],
+   "n": 60,
+   "style": "Cartoon"
+  },
+  "zz61_tasha-ep2.mp4": {
+   "primary": "fun",
+   "n": 61,
+   "style": "Cartoon"
+  }
+ },
+ "creative": {
+  "heading": "THE CREATIVITY METER 💡",
+  "prompt": "How original did this feel? Be honest, it's allowed to be bad.",
+  "options": [
+   {
+    "key": "cre.wow",
+    "label": "WHO THOUGHT OF THIS?!",
+    "emoji": "🤯",
+    "meaning": "Super original. I haven't seen anything like it.",
+    "tone": "pos",
+    "score": 4
+   },
+   {
+    "key": "cre.lowkey",
+    "label": "LOWKEY CREATIVE",
+    "emoji": "🎨",
+    "meaning": "Fresh in a quiet way. Nice touch.",
+    "tone": "pos",
+    "score": 3
+   },
+   {
+    "key": "cre.basic",
+    "label": "KINDA BASIC",
+    "emoji": "😐",
+    "meaning": "Fine, but nothing new. Pretty ordinary.",
+    "tone": "neutral",
+    "score": 2
+   },
+   {
+    "key": "cre.seen",
+    "label": "SEEN THIS 100 TIMES",
+    "emoji": "🥱",
+    "meaning": "Feels copied or overdone. Not creative.",
+    "tone": "neg",
+    "score": 1
+   }
+  ]
+ },
+ "other": {
+  "label": "OTHER",
+  "emoji": "✍️",
+  "meaning": "None of these fit. Write your own.",
+  "placeholder": "Say it your way…",
+  "tone": "neutral"
+ },
+ "pace": {
+  "secondsPerVideo": 60,
+  "label": "1 verdict per minute"
+ }
+}

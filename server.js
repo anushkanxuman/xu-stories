@@ -10,6 +10,8 @@ const VIDEOS = path.join(PUBLIC, 'videos');
 const POSTERS = path.join(PUBLIC, 'posters');
 const META_FILE = path.join(ROOT, 'videos-meta.json'); // optional titles: [{ "file": "a.mp4", "title": "...", "description": "..." }]
 
+const reviewsApi = require('./reviews-api')({ root: ROOT, publicDir: PUBLIC }); // POST /api/reviews and friends
+
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
   '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg',
@@ -80,6 +82,7 @@ const server = http.createServer(async (req, res) => {
   const pathname = decodeURIComponent(url.pathname);
 
   if (pathname === '/api/videos' && req.method === 'GET') return send(res, 200, listVideos());
+  if (reviewsApi(req, res, url)) return;
 
   const p = safeJoin(PUBLIC, pathname === '/' ? 'index.html' : pathname.slice(1));
   return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');

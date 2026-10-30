@@ -1,0 +1,160 @@
+{
+  "_note": "Two recipes in 'types'. 'groups' gives a default recipe to a range of reel numbers (#N badges); 'videos' picks a recipe for one reel and wins, e.g. \"5\": \"flow\". A reel with no recipe shows no eye icon.",
+  "types": {
+    "gemini": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Video",
+        "tool": "Gemini (Argon)"
+      }
+    ],
+    "flow": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Video",
+        "tool": "Google Flow Omni"
+      }
+    ],
+    "reel-kling": [
+      {
+        "label": "Stills",
+        "tool": "ChatGPT / Gemini"
+      },
+      {
+        "label": "Video",
+        "tool": "Kling 3.0"
+      },
+      {
+        "label": "Voice & edit",
+        "tool": "Cardboard"
+      }
+    ],
+    "reel-seedance": [
+      {
+        "label": "Stills",
+        "tool": "ChatGPT / Gemini"
+      },
+      {
+        "label": "Video",
+        "tool": "Seedance 2.5"
+      },
+      {
+        "label": "Voice & edit",
+        "tool": "Cardboard"
+      }
+    ],
+    "full-episode": [
+      {
+        "label": "Script",
+        "tool": "Claude"
+      },
+      {
+        "label": "Stills",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Video",
+        "tool": "Seedance 2.5 (hook)"
+      },
+      {
+        "label": "Voice",
+        "tool": "ElevenLabs"
+      },
+      {
+        "label": "Music",
+        "tool": "Gemini"
+      },
+      {
+        "label": "Edit",
+        "tool": "Cardboard"
+      }
+    ],
+    "hook-chatgpt-seedance": [
+      {
+        "label": "Still",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Video",
+        "tool": "Seedance 2.5"
+      }
+    ],
+    "hook-chatgpt-grok": [
+      {
+        "label": "Still",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Video",
+        "tool": "Grok Imagine"
+      }
+    ],
+    "hook-gemini-seedance": [
+      {
+        "label": "Still",
+        "tool": "Gemini"
+      },
+      {
+        "label": "Video",
+        "tool": "Seedance 2.5"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "from": 1,
+      "to": 34,
+      "type": "gemini"
+    },
+    {
+      "from": 38,
+      "to": 49,
+      "type": "reel-kling"
+    },
+    {
+      "from": 50,
+      "to": 54,
+      "type": "reel-seedance"
+    }
+  ],
+  "videos": {
+    "1": "flow",
+    "5": "flow",
+    "6": "flow",
+    "8": "flow",
+    "9": "flow",
+    "11": "flow",
+    "13": "flow",
+    "15": "flow",
+    "16": "flow",
+    "20": "flow",
+    "22": "flow",
+    "24": "flow",
+    "25": "flow",
+    "28": "flow",
+    "31": "flow",
+    "32": "flow",
+    "33": "flow",
+    "55": "full-episode",
+    "56": "hook-chatgpt-seedance",
+    "57": "hook-chatgpt-grok",
+    "58": "hook-gemini-seedance",
+    "59": "hook-gemini-seedance",
+    "60": "hook-chatgpt-seedance",
+    "61": "hook-chatgpt-seedance"
+  }
+}
