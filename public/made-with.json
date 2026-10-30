@@ -112,6 +112,96 @@
         "label": "Video",
         "tool": "Seedance 2.5"
       }
+    ],
+    "gemini-argon-pop": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "Gemini (Argon)"
+      },
+      {
+        "label": "Video",
+        "tool": "Gemini (Argon)"
+      },
+      {
+        "label": "Style",
+        "tool": "Pop-art comic animation"
+      }
+    ],
+    "grok-pop": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "Grok Imagine"
+      },
+      {
+        "label": "Video",
+        "tool": "Grok Imagine"
+      },
+      {
+        "label": "Style",
+        "tool": "Pop-art comic animation"
+      }
+    ],
+    "kling-higgsfield-pop": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "Kling AI (Higgsfield)"
+      },
+      {
+        "label": "Video",
+        "tool": "Kling AI (Higgsfield)"
+      },
+      {
+        "label": "Style",
+        "tool": "Pop-art comic animation"
+      }
+    ],
+    "flow-omni-pop": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "Google Flow Omni"
+      },
+      {
+        "label": "Video",
+        "tool": "Google Flow Omni"
+      },
+      {
+        "label": "Style",
+        "tool": "Pop-art comic animation"
+      }
+    ],
+    "cardboard-pop": [
+      {
+        "label": "Script",
+        "tool": "ChatGPT"
+      },
+      {
+        "label": "Character",
+        "tool": "Cardboard"
+      },
+      {
+        "label": "Video",
+        "tool": "Cardboard"
+      },
+      {
+        "label": "Style",
+        "tool": "Pop-art comic animation"
+      }
     ]
   },
   "groups": [
@@ -160,6 +250,11 @@
     "58": "hook-gemini-seedance",
     "59": "hook-gemini-seedance",
     "60": "hook-chatgpt-seedance",
-    "61": "hook-chatgpt-seedance"
+    "61": "hook-chatgpt-seedance",
+    "62": "gemini-argon-pop",
+    "63": "grok-pop",
+    "64": "kling-higgsfield-pop",
+    "65": "flow-omni-pop",
+    "66": "cardboard-pop"
   }
 }

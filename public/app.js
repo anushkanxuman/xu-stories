@@ -199,6 +199,21 @@
   made.addEventListener('click', closeMade);
   document.addEventListener('drop:active', refreshEye);
 
+  /* ---------- new drops are spread through the feed ---------- */
+  // Videos flagged "mix" in captions.json are placed at even gaps among the rest (same order for everyone),
+  // instead of piling up at the end. The others keep their original order and every video keeps its own #N.
+  function spreadMixed(list) {
+    const base = list.filter((v) => !v.mix), extra = list.filter((v) => v.mix);
+    if (!extra.length) return list;
+    const total = base.length + extra.length, out = [];
+    let b = 0, e = 0;
+    for (let pos = 0; pos < total; pos++) {
+      if (e < extra.length && pos === Math.floor((e + 1) * total / (extra.length + 1))) out.push(extra[e++]);
+      else out.push(base[b++]);
+    }
+    return out;
+  }
+
   /* ---------- boot ---------- */
   Promise.all([
     fetch((window.DROP_BASE || '/') + 'videos.json').then((r) => r.json()),
@@ -207,8 +222,9 @@
   ]).then(([list, caps, mw]) => {
     if (mw) madeCfg = { types: mw.types || {}, groups: mw.groups || [], videos: mw.videos || {} };
     const at = (u) => (u ? (window.DROP_BASE || '/') + u.replace(/^\//, '') : u); // lets the site live under a sub-path (staging)
-    videos = list.map((v, k) => ({ ...v, src: at(v.src), poster: at(v.poster), n: k + 1, caption: (caps[v.id] || {}).caption, hidden: (caps[v.id] || {}).hidden }))
+    videos = list.map((v, k) => ({ ...v, src: at(v.src), poster: at(v.poster), n: k + 1, caption: (caps[v.id] || {}).caption, hidden: (caps[v.id] || {}).hidden, mix: (caps[v.id] || {}).mix }))
       .filter((v) => !v.hidden);
+    videos = spreadMixed(videos);
     if (!videos.length) { empty.hidden = false; return; }
     build(); icon(); refreshEye(); feed.focus({ preventScroll: true });
     api.ready = true;

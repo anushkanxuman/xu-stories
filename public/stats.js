@@ -76,6 +76,6 @@
   document.addEventListener('timeupdate', (e) => { if (e.target.tagName === 'VIDEO' && cur) { const t = Date.now(); if (t - (render.lastWatch || 0) > 1000) { render.lastWatch = t; soon(); } } }, true);
 
   fetch((window.DROP_BASE || '/') + 'review-config.json').then((r) => r.json()).then((c) => { if (c.pace) pace = c.pace; soon(); }).catch(() => {});
-  const loadCommunity = () => fetch('/api/reviews/stats').then((r) => (r.ok ? r.json() : null)).then((j) => { community = j; soon(); }).catch(() => {});
+  const loadCommunity = () => fetch(((document.querySelector('meta[name="review-api"]') || {}).content || '/api/reviews').replace(/\/$/, '') + '/stats').then((r) => (r.ok ? r.json() : null)).then((j) => { community = j; soon(); }).catch(() => {});
   loadCommunity(); setInterval(loadCommunity, 60000);
 })();
