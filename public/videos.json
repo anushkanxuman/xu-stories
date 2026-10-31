@@ -544,5 +544,12 @@
     "description": "",
     "src": "/videos/zz78_friends_animatic.mp4",
     "poster": "/posters/zz78_friends_animatic.mp4.jpg"
+  },
+  {
+    "id": "zz79_rocket_singh.mp4",
+    "title": "zz79 rocket singh",
+    "description": "",
+    "src": "/videos/zz79_rocket_singh.mp4",
+    "poster": "/posters/zz79_rocket_singh.mp4.jpg"
   }
 ]
