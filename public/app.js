@@ -166,6 +166,36 @@
     },
   };
 
+  /* ---------- gallery: every video as a tile, tap to jump there ---------- */
+  const galBtn = document.createElement('button');
+  galBtn.className = 'gal-btn'; galBtn.type = 'button'; galBtn.textContent = '▦ Gallery'; galBtn.setAttribute('aria-haspopup', 'dialog');
+  document.body.appendChild(galBtn);
+  let gal = null;
+  const closeGal = () => { if (gal) { gal.remove(); gal = null; galBtn.focus(); } };
+  galBtn.addEventListener('click', () => {
+    if (gal || !videos.length) return;
+    gal = document.createElement('div'); gal.className = 'gal'; gal.setAttribute('role', 'dialog'); gal.setAttribute('aria-modal', 'true'); gal.setAttribute('aria-label', 'All videos');
+    const head = document.createElement('div'); head.className = 'gal-head';
+    const h = document.createElement('h2'); h.textContent = `All videos (${videos.length})`;
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'ghost'; x.textContent = 'CLOSE'; x.addEventListener('click', closeGal);
+    head.append(h, x);
+    const grid = document.createElement('div'); grid.className = 'gal-grid';
+    videos.forEach((v, i) => {
+      const t = document.createElement('button'); t.type = 'button'; t.className = 'gal-tile' + (i === active ? ' on' : '');
+      if (v.poster) { const im = document.createElement('img'); im.src = v.poster; im.alt = ''; im.loading = 'lazy'; t.appendChild(im); }
+      const mk = slides[i] && slides[i].querySelector('.mark');
+      if (mk && !mk.hidden) { const m = document.createElement('span'); m.className = 'gal-mark'; m.textContent = mk.textContent; t.appendChild(m); }
+      const c = document.createElement('span'); c.className = 'gal-cap'; c.textContent = (window.dropNums ? '#' + v.n + ' ' : '') + (v.caption || `Video ${i + 1}`);
+      t.appendChild(c);
+      t.addEventListener('click', () => { const k = i; closeGal(); goTo(k); });
+      grid.appendChild(t);
+    });
+    gal.append(head, grid); document.body.appendChild(gal);
+    const on = grid.querySelector('.on'); if (on) on.scrollIntoView({ block: 'center' });
+    x.focus();
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGal(); });
+
   /* ---------- how it's made (eye icon) ---------- */
   const eye = $('eye'), made = $('made');
   let madeCfg = { types: {}, groups: [], videos: {} };

@@ -35,6 +35,7 @@
       store.set('xs-client', clientId);
     }
     let available = null; // null = not known yet, true = server found, false = no backend here
+    let needInvite = false; // the server wants an invite link and this browser has no session yet
     let pending = new Set();
     try { pending = new Set(JSON.parse(store.get('xs-outbox') || '[]')); } catch (e) { /* start empty */ }
     const timers = new Map();
@@ -50,6 +51,7 @@
           : await fetch(`${base}?client=${encodeURIComponent(clientId)}&video=${encodeURIComponent(id)}`, { method: 'DELETE' });
         if (res.status === 404 || res.status === 405) { available = false; pending.clear(); }
         else if (res.ok) { available = true; pending.delete(id); }
+        else if (res.status === 401) { needInvite = true; pending.add(id); }  // no invite session: keep it, send once there is one
         else if (res.status >= 500 || res.status === 429) pending.add(id);   // try again later
         else pending.delete(id);                                             // refused (4xx): retrying won't help
       } catch (e) { pending.add(id); }                                       // offline: try again later
@@ -60,19 +62,21 @@
 
     const adapter = {
       onStatus() {},
-      get shares() { return available === true; },
+      get shares() { return available === true && !needInvite; },
       get label() {
         if (available !== true) return local.label;
+        if (needInvite) return local.label + ' · open your invite link to share';
         return local.label + (pending.size ? ' · will send when connected' : ' · shared with the Xuman team');
       },
       async init() {
-        try { const r = await fetch(base + '/ping'); const j = r.ok ? await r.json() : null; available = j && j.ok ? true : false; } catch (e) { available = null; }
+        try { await window.dropSession; } catch (e) { /* no invite in the link: fine */ }
+        try { const r = await fetch(base + '/ping'); const j = r.ok ? await r.json() : null; available = j && j.ok ? true : false; needInvite = !!(j && j.inviteRequired && !j.session); } catch (e) { available = null; }
         if (available) flush();
         window.addEventListener('online', flush);
         adapter.onStatus();
       },
       syncTime(snap, name, beacon) { // total time here + time per video; beacon = page is closing
-        if (available !== true) return;
+        if (available !== true || needInvite) return;
         const body = JSON.stringify({ clientId, name: name || undefined, ...snap });
         if (beacon && navigator.sendBeacon) { navigator.sendBeacon(base + '/time', new Blob([body], { type: 'application/json' })); return; }
         fetch(base + '/time', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {});
@@ -123,7 +127,7 @@
   let nick = store.get('xs-nick') || '';   // the reviewer's name, asked first
   const needName = () => !nick && store.get('xs-name-asked') !== '1';
 
-  const hasAny = (r) => !!(r && (r.reaction || r.creative || r.secondary || r.style || r.clarity || r.fix || r.fixDetail || r.tea || r.teaMood));
+  const hasAny = (r) => !!(r && (r.reaction || r.creative || r.secondary || r.style || r.clarity || r.fix || r.fixDetail || r.tea || r.teaMood || r.vote));
   const statusOf = (r) => (!r ? 'none' : r.submittedAt ? 'submitted' : r.reaction ? 'reacted' : hasAny(r) ? 'draft' : 'none');
   const counts = () => { // reacted = picked a first impression, submitted = dropped a verdict, touched = either
     let reacted = 0, submitted = 0, touched = 0;
@@ -310,7 +314,21 @@
       el('div', {}, el('p', { class: 'cd-prompt', text: tea.moods.prompt }), moods, starters, ta));
     cards.push(c6);
 
-    body.replaceChildren(head, ...cards);
+    // optional quick like / dislike, kept apart from the first-impression card
+    const thumb = (dir) => {
+      const b = el('button', { class: 'vote-btn', type: 'button', dataset: { dir }, 'aria-label': dir === 'up' ? 'Like this video' : 'Dislike this video', 'aria-pressed': String(r.vote === dir) });
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3zm2 9V10.5l3.5-6.2a1.6 1.6 0 0 1 3 .8L15 9h4.6a2 2 0 0 1 2 2.4l-1.3 6.8a2.5 2.5 0 0 1-2.5 1.8H9z"/></svg>';
+      if (dir === 'down') b.firstChild.style.transform = 'rotate(180deg)';
+      b.addEventListener('click', () => {
+        const next = (reviews.get(cur.video.id) || {}).vote === dir ? undefined : dir;
+        edit((x) => { x.vote = next; });
+        voteRow.querySelectorAll('.vote-btn').forEach((o) => o.setAttribute('aria-pressed', String(next === o.dataset.dir)));
+      });
+      return b;
+    };
+    const voteRow = el('div', { class: 'rv-vote' }, el('span', { class: 'rv-vote-t', text: 'LIKE IT?' }), el('span', { class: 'cd-opt', text: 'OPTIONAL' }), el('span', { class: 'rv-vote-b' }, thumb('up'), thumb('down')));
+
+    body.replaceChildren(head, voteRow, ...cards);
     body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap');
     renderStats(); renderBar();
   }
@@ -357,7 +375,33 @@
     }
   }
 
-  /* ---------- name first ---------- */
+  /* ---------- name first: a full-screen gate before anything else ---------- */
+  function showGate() {
+    const input = el('input', { class: 'nick', type: 'text', maxlength: '30', placeholder: 'Your name', 'aria-label': 'Your name', autocomplete: 'given-name' });
+    const gate = el('div', { class: 'gate', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Before you start' });
+    const resume = () => { try { const c = window.drop && window.drop.current(); if (c && c.el) c.el.play().catch(() => {}); } catch (e) { /* autoplay blocked: fine */ } };
+    const done = (anon) => {
+      nick = anon ? '' : input.value.trim();
+      if (!anon && !nick) { input.focus(); return; }
+      store.set('xs-nick', nick); store.set('xs-name-asked', '1');
+      gate.remove(); resume();
+      if (cur) renderReview();
+    };
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') done(false); });
+    gate.append(el('div', { class: 'gate-card' },
+      el('p', { class: 'rv-kicker', text: 'BEFORE YOU START' }),
+      el('h2', { text: "Who's judging?" }),
+      el('p', { class: 'cd-prompt', text: 'Your name goes on every verdict you drop, so the Xuman team knows who said what.' }),
+      input,
+      el('div', { class: 'bar-btns' },
+        el('button', { class: 'skip', type: 'button', text: 'STAY ANONYMOUS', onclick: () => done(true) }),
+        el('button', { class: 'cta', type: 'button', text: "LET'S GO →", onclick: () => done(false) }))));
+    document.body.append(gate);
+    try { const c = window.drop && window.drop.current(); if (c && c.el) c.el.pause(); } catch (e) { /* not ready yet */ }
+    input.focus({ preventScroll: true });
+  }
+
+  /* ---------- name edit (from the review panel) ---------- */
   function renderWelcome(editing) {
     view = 'welcome';
     const input = el('input', { class: 'nick', type: 'text', maxlength: '30', placeholder: 'Your name', 'aria-label': 'Your name', value: nick, autocomplete: 'given-name' });
@@ -470,7 +514,7 @@
     cur = { video: detail.video, entry: entry || { n: detail.video.n, primary: 'gen' }, index: detail.index, total: detail.total };
     justDropped = false;
     if (view === 'results') view = 'review';
-    if (needName() || view === 'welcome') { renderWelcome(false); return; }
+    if (view === 'welcome') { renderWelcome(false); return; }
     renderReview();
     if (window.matchMedia('(min-width: 981px)').matches && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' }); // new video: back to the top of its review
   }
@@ -495,6 +539,7 @@
       saved.forEach((r) => reviews.set(r.videoId, r));
     } catch (e) { showError('Check your connection and try again.'); return; }
     startTimeSync();
+    if (needName()) showGate();
     const go = () => { reviews.forEach((_, id) => syncMark(id)); if (window.drop.index >= 0) setCurrent({ video: window.drop.videos[window.drop.index], index: window.drop.index, total: window.drop.videos.length }); };
     if (window.drop && window.drop.ready) go(); else document.addEventListener('drop:ready', go, { once: true });
   }

@@ -71,6 +71,7 @@ module.exports = function createReviewsApi({ root, publicDir }) {
       if (typeof input[f] !== 'string' || !cfg.keys.has(input[f])) return null;
       r[f] = input[f];
     }
+    if (input.vote === 'up' || input.vote === 'down') r.vote = input.vote;
     r.fixDetail = str(input.fixDetail, 300);
     r.tea = str(input.tea, 1000);
     r.name = str(input.name, 30);
@@ -136,8 +137,8 @@ module.exports = function createReviewsApi({ root, publicDir }) {
       return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
     };
     const iso = (t) => (t ? new Date(t).toISOString() : '');
-    const head = ['video', 'name', 'status', 'first_impression', 'follow_up', 'creativity', 'did_it_land', 'style', 'fix', 'fix_detail', 'comment_mood', 'comment', 'other_text', 'seconds_on_video', 'submitted_at', 'updated_at', 'reviewer_id', 'video_id'];
-    const rows = records.map((r) => [r.n, r.name, statusOf(r), lab(r.reaction), lab(r.secondary), lab(r.creative), lab(r.clarity), lab(r.style), lab(r.fix),
+    const head = ['video', 'name', 'status', 'like', 'first_impression', 'follow_up', 'creativity', 'did_it_land', 'style', 'fix', 'fix_detail', 'comment_mood', 'comment', 'other_text', 'seconds_on_video', 'submitted_at', 'updated_at', 'reviewer_id', 'video_id'];
+    const rows = records.map((r) => [r.n, r.name, statusOf(r), r.vote || '', lab(r.reaction), lab(r.secondary), lab(r.creative), lab(r.clarity), lab(r.style), lab(r.fix),
       r.fixDetail, lab(r.teaMood), r.tea, r.otherText ? JSON.stringify(r.otherText) : '', r.viewMs ? Math.round(r.viewMs / 1000) : '', iso(r.submittedAt), iso(r.updatedAt), r.clientId.slice(0, 8), r.videoId]);
     return [head, ...rows].map((row) => row.map(cell).join(',')).join('\n') + '\n';
   }
