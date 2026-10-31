@@ -351,6 +351,26 @@
           "tool": "Ultra-photorealistic cinematic short film"
         }
       ]
+    },
+    "72": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Character",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Video",
+          "tool": "Google Flow Omni"
+        },
+        {
+          "label": "Style",
+          "tool": "Ultra-photorealistic cinematic short film"
+        }
+      ]
     }
   }
 }

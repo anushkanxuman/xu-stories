@@ -495,5 +495,12 @@
     "description": "",
     "src": "/videos/zz71_skills_worth_more.mp4",
     "poster": "/posters/zz71_skills_worth_more.mp4.jpg"
+  },
+  {
+    "id": "zz72_flight_strangers.mp4",
+    "title": "zz72 flight strangers",
+    "description": "",
+    "src": "/videos/zz72_flight_strangers.mp4",
+    "poster": "/posters/zz72_flight_strangers.mp4.jpg"
   }
 ]
