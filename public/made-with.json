@@ -519,6 +519,22 @@
           "tool": "Photorealistic cinematic Bollywood-inspired recreation"
         }
       ]
+    },
+    "80": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Character",
+          "tool": "Gemini"
+        },
+        {
+          "label": "Video",
+          "tool": "Gemini"
+        }
+      ]
     }
   }
 }
