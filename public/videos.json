@@ -460,5 +460,19 @@
     "description": "",
     "src": "/videos/zz66_Electric_Cobalt_Supernova.mp4",
     "poster": "/posters/zz66_Electric_Cobalt_Supernova.mp4.jpg"
+  },
+  {
+    "id": "zz67_perfectionism_smart_one.mp4",
+    "title": "zz67 perfectionism smart one",
+    "description": "",
+    "src": "/videos/zz67_perfectionism_smart_one.mp4",
+    "poster": "/posters/zz67_perfectionism_smart_one.mp4.jpg"
+  },
+  {
+    "id": "zz68_ghost_chair.mp4",
+    "title": "zz68 ghost chair",
+    "description": "",
+    "src": "/videos/zz68_ghost_chair.mp4",
+    "poster": "/posters/zz68_ghost_chair.mp4.jpg"
   }
 ]

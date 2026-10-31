@@ -19,7 +19,9 @@ module.exports = function adminAdd({ root, publicDir, listVideos, makePosters, w
   const ADMIN_KEY = process.env.ADMIN_KEY || '';
 
   const readJSON = (f, fb) => { try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch { return fb; } };
-  const writeJSON = (f, data) => { const tmp = f + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n'); fs.renameSync(tmp, f); };
+  // keep each file's own indent (some use 1 space, some 2) so a new video only shows up as added lines in the diff
+  const indentOf = (f) => { try { const m = /^\{\r?\n( +)"/.exec(fs.readFileSync(f, 'utf8')); return m ? m[1].length : 2; } catch { return 2; } };
+  const writeJSON = (f, data) => { const tmp = f + '.tmp', tail = fs.existsSync(f) && !fs.readFileSync(f, 'utf8').endsWith('\n') ? '' : '\n'; fs.writeFileSync(tmp, JSON.stringify(data, null, indentOf(f)) + tail); fs.renameSync(tmp, f); };
   const reply = (res, status, body) => { res.writeHead(status, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(body)); };
   const str = (v, max) => (typeof v === 'string' ? v.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '').trim().slice(0, max) : '');
 

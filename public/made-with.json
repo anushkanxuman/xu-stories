@@ -255,6 +255,46 @@
     "63": "grok-pop",
     "64": "kling-higgsfield-pop",
     "65": "flow-omni-pop",
-    "66": "cardboard-pop"
+    "66": "cardboard-pop",
+    "67": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "Claude"
+        },
+        {
+          "label": "Character",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Video",
+          "tool": "Seedance 2.5 (Higgsfield)"
+        },
+        {
+          "label": "Style",
+          "tool": "AI-generated animation"
+        }
+      ]
+    },
+    "68": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "Claude"
+        },
+        {
+          "label": "Character",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Video",
+          "tool": "Seedance 2.5 (Higgsfield)"
+        },
+        {
+          "label": "Style",
+          "tool": "Cinematic AI-generated video"
+        }
+      ]
+    }
   }
 }
