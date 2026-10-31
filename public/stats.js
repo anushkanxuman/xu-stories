@@ -17,7 +17,7 @@
   };
   const row = (k, v) => { const r = el('div', 'st-row'); r.append(el('span', null, k), el('b', null, v)); return r; };
 
-  const ASPECTS = [['reaction', 'First look'], ['secondary', 'Follow-up'], ['creative', 'Creativity'], ['clarity', 'Did it land'], ['style', 'Visual'], ['fix', 'The fix']];
+  const ASPECTS = [['reaction', 'Idea'], ['secondary', 'Follow-up'], ['creative', 'Creativity'], ['clarity', 'Did it land'], ['style', 'Visual'], ['fix', 'The fix']];
   const vrow = (label, up, down, bold) => { // label ... 👍 n  👎 n, with a green / pink split bar underneath
     const r = el('div', 'st-vrow' + (bold ? ' bold' : '')), tot = up + down;
     const a = el('span', 'gv up'), b = el('span', 'gv down');

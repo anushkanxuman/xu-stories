@@ -265,93 +265,39 @@
 
     const head = el('div', { class: 'rv-head' },
       el('div', { class: 'rv-title' }, el('h2', { text: window.dropNums ? `VIDEO #${pad(entry.n)}` : 'THIS DROP' }), el('span', { class: 'rv-pos', text: `${index + 1} / ${total}` }), nameBtn, resBtn),
-      el('div', { class: 'rv-sub' }, el('p', { class: 'rv-micro', text: cfg.microcopy[index % cfg.microcopy.length] }), el('div', { class: 'rv-stats' })),
+      el('div', { class: 'rv-sub' }, el('div', { class: 'rv-stats' })),
       el('div', { class: 'rv-prog' }, el('i')));
 
-    // 1. first impression (replaces the old like button)
-    const c1 = card({ title: cat.heading, prompt: cat.prompt, open: true, vote: 'reaction', done: !!r.reaction },
-      options(cat.options, r.reaction, cat.heading, (key, o) => {
-        setField('reaction', key);
-        c1.setDone(key);
-        if (key && window.drop) window.drop.burst(o.emoji);
-      }, oth('reaction', r)));
-    const cards = [c1];
+    // plain panel: a like / dislike for the video and three parts of it, then a suggestion and a comment (all optional)
+    const votesOf = () => (reviews.get(cur.video.id) || {}).votes || {};
+    const setVote = (key) => (v) => edit((x) => { const m = { ...(x.votes || {}) }; if (v) m[key] = v; else delete m[key]; x.votes = Object.keys(m).length ? m : undefined; });
+    const vrow = (label, get, set) => el('div', { class: 'rv-vote' }, el('span', { class: 'rv-vote-t', text: label }), voteButtons(label.toLowerCase(), get, set));
+    const box = (title, ph, field, max) => {
+      const ta = el('textarea', { class: 'tea', maxlength: String(max), placeholder: ph, 'aria-label': title });
+      ta.value = r[field] || '';
+      let t = 0;
+      ta.addEventListener('input', () => { clearTimeout(t); t = setTimeout(() => edit((x) => { x[field] = ta.value.trim() || undefined; }), 300); });
+      return el('div', { class: 'rv-vote rv-text' }, el('span', { class: 'rv-vote-t', text: title }), ta);
+    };
+    const parts = [
+      vrow('VIDEO', () => (reviews.get(cur.video.id) || {}).vote, (v) => edit((x) => { x.vote = v; })),
+      vrow('IDEA', () => votesOf().reaction, setVote('reaction')),
+      vrow('CREATIVITY', () => votesOf().creative, setVote('creative')),
+      vrow('VISUALS', () => votesOf().style, setVote('style')),
+      box('SUGGESTION', 'What would you change? (optional)', 'fixDetail', 300),
+      box('COMMENT', 'Anything else? (optional)', 'tea', 1000),
+    ];
 
-    // 2. secondary category: only where the config says it adds real feedback
-    if (entry.secondary && cfg.categories[entry.secondary]) {
-      const sc = cfg.categories[entry.secondary];
-      const c2 = card({ title: sc.heading, vote: 'secondary', prompt: cfg.secondaryPrompts[entry.secondary] || sc.prompt, optional: true, done: !!r.secondary },
-        options(sc.options, r.secondary, sc.heading, (key) => { setField('secondary', key); c2.setDone(key); }, oth('secondary', r)));
-      cards.push(c2);
-    }
-
-    // 3. creativity rating (good and bad answers on purpose)
-    const cr = cfg.creative;
-    const cc = card({ title: cr.heading, vote: 'creative', prompt: cr.prompt, accent: 'pink', open: true, done: !!r.creative },
-      options(cr.options, r.creative, cr.heading, (key) => { setField('creative', key); cc.setDone(key); }, oth('creative', r)));
-    cards.push(cc);
-
-    // 4. did it land (post-watch clarity)
-    const cl = cfg.clarity;
-    const c3 = card({ title: cl.heading, vote: 'clarity', prompt: cl.prompt, accent: 'lime', optional: true, done: !!r.clarity },
-      options(cl.options, r.clarity, cl.heading, (key) => { setField('clarity', key); c3.setDone(key); }, oth('clarity', r)));
-    cards.push(c3);
-
-    // 5. the video's own visual style, only when the style label is reliable
-    if (entry.style) {
-      const st = cfg.style;
-      const c4 = card({ title: st.heading, vote: 'style', prompt: st.prompt.replace('{style}', entry.style), accent: 'pink', optional: true, done: !!r.style },
-        options(st.options, r.style, st.heading, (key) => { setField('style', key); c4.setDone(key); }, oth('style', r)));
-      cards.push(c4);
-    }
-
-    // 5. director's cut: one fix, optional detail
-    const fx = cfg.fix;
-    const detail = el('input', { class: 'detail', type: 'text', maxlength: '300', placeholder: fx.detailPlaceholder, 'aria-label': 'More detail about your fix', value: r.fixDetail || '' });
-    const syncDetail = () => { detail.hidden = !r.fix || r.fix === 'fix.nothing' || r.fix === 'other.fix'; };
-    let dTimer = 0;
-    detail.addEventListener('input', () => { clearTimeout(dTimer); dTimer = setTimeout(() => edit((x) => { x.fixDetail = detail.value.trim() || undefined; }), 300); });
-    const c5 = card({ title: fx.heading, vote: 'fix', optional: true, done: !!r.fix },
-      el('div', {}, options(fx.options, r.fix, fx.heading, (key) => {
-        setField('fix', key);
-        if (!key || key === 'fix.nothing' || key === 'other.fix') { edit((x) => { x.fixDetail = undefined; }); detail.value = ''; }
-        r.fix = key; syncDetail(); c5.setDone(key);
-      }, oth('fix', r)), detail));
-    syncDetail();
-    cards.push(c5);
-
-    // 6. the tea
-    const tea = cfg.tea;
-    const ta = el('textarea', { class: 'tea', maxlength: '1000', placeholder: tea.placeholder, 'aria-label': 'Your comment' });
-    ta.value = r.tea || '';
-    let tTimer = 0;
-    const teaDone = () => { const x = reviews.get(cur.video.id) || {}; c6.setDone(x.teaMood || x.tea); };
-    const saveTea = () => { clearTimeout(tTimer); tTimer = setTimeout(() => { edit((x) => { x.tea = ta.value.trim() || undefined; }); teaDone(); }, 300); };
-    ta.addEventListener('input', saveTea);
-    const starters = el('div', { class: 'starters' }, tea.starters.map((s) => el('button', {
-      type: 'button', text: s,
-      onclick() { ta.value = ta.value ? ta.value.replace(/\s*$/, ' ') + s + ' ' : s + ' '; ta.focus(); saveTea(); },
-    })));
-    const moods = options(tea.moods.options, r.teaMood, 'Mood of your comment', (key) => { edit((x) => { x.teaMood = key || undefined; }); teaDone(); });
-    const c6 = card({ title: tea.heading, optional: true, done: !!(r.tea || r.teaMood) },
-      el('div', {}, el('p', { class: 'cd-prompt', text: tea.moods.prompt }), moods, starters, ta));
-    cards.push(c6);
-
-    // optional quick like / dislike on the whole video (each card has its own too)
-    const voteRow = el('div', { class: 'rv-vote' }, el('span', { class: 'rv-vote-t', text: 'LIKE IT?' }), el('span', { class: 'cd-opt', text: 'OPTIONAL' }),
-      voteButtons('this video', () => (reviews.get(cur.video.id) || {}).vote, (v) => edit((x) => { x.vote = v; })));
-
-    body.replaceChildren(head, voteRow, ...cards);
+    body.replaceChildren(head, ...parts);
     body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap');
     renderStats(); renderBar();
   }
 
   function renderStats() {
     const box = $('.rv-stats'); if (!box || !cur) return;
-    const { reacted, submitted, touched } = counts();
+    const { submitted, touched } = counts();
     box.replaceChildren(
       el('span', {}, el('b', { text: submitted }), submitted === 1 ? ' verdict' : ' verdicts'),
-      el('span', {}, el('b', { text: reacted }), ' reacted'),
       el('span', { text: `${touched}/${cur.total}` }),
       el('span', { class: 'rv-time', title: 'Time you have actively spent here', text: '⏱ ' + (window.dropTime ? window.dropTime.format(window.dropTime.totalMs()) : '0:00') }));
     const fill = $('.rv-prog i'); if (fill) fill.style.width = (cur.total ? (touched / cur.total) * 100 : 0) + '%';
@@ -365,7 +311,7 @@
     const go = () => { last ? renderResults() : window.drop.goTo(cur.index + 1); };
     const note = el('div', { class: 'bar-note' + (saveErr ? ' err' : st !== 'none' ? ' ok' : ''), 'aria-live': 'polite' });
     note.textContent = saveErr ? "Couldn't save on this device. Your answers stay until you close this page."
-      : st === 'none' ? 'Tap anything above. It all saves by itself, all optional.' : `✓ Saved · ${adapter.label}`;
+      : st === 'none' ? 'Tap anything above. It saves by itself, all optional.' : `✓ Saved · ${adapter.label}`;
     bar.replaceChildren(note, el('div', { class: 'bar-btns' }, el('button', { class: 'cta', type: 'button', text: last ? 'SEE MY RESULTS →' : 'NEXT →', onclick: go })));
   }
 
