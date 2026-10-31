@@ -475,6 +475,26 @@
           "tool": "2D animated sitcom recreation"
         }
       ]
+    },
+    "78": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Character",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Video",
+          "tool": "Kling AI (Higgsfield)"
+        },
+        {
+          "label": "Style",
+          "tool": "2D animated sitcom recreation"
+        }
+      ]
     }
   }
 }

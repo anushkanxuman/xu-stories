@@ -537,5 +537,12 @@
     "description": "",
     "src": "/videos/zz77_friends.mp4",
     "poster": "/posters/zz77_friends.mp4.jpg"
+  },
+  {
+    "id": "zz78_friends_animatic.mp4",
+    "title": "zz78 friends animatic",
+    "description": "",
+    "src": "/videos/zz78_friends_animatic.mp4",
+    "poster": "/posters/zz78_friends_animatic.mp4.jpg"
   }
 ]
