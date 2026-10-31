@@ -180,7 +180,24 @@
   const galBtn = document.createElement('button');
   galBtn.className = 'gal-btn'; galBtn.type = 'button'; galBtn.textContent = '▦ Gallery'; galBtn.setAttribute('aria-haspopup', 'dialog');
   document.body.appendChild(galBtn);
-  let gal = null, galFilter = 'all', galSort = 'order';
+  let gal = null, galFilter = 'all', galSort = 'order', galStyle = '', galVideoTool = '', galScript = '', styleCfg = null;
+
+  /* style and tool filters: the style comes from review-config.json (or the "Style" step), the tools from the "how it's made" steps */
+  const STYLES = [[/comic/i, 'Comic'], [/anime/i, 'Anime'], [/pixel/i, 'Pixel'], [/clay/i, 'Clay'], [/felt/i, 'Felt'], [/line art/i, 'Line art'], [/retro/i, 'Retro 90s'], [/\b3d\b/i, '3D'], [/cartoon|2d|animat/i, 'Cartoon'], [/photoreal|realistic|cinematic/i, 'Realistic']];
+  const styleOf = (v) => {
+    const c = styleCfg && styleCfg[v.id] && styleCfg[v.id].style; if (c) return c;
+    const st = ((window.dropSteps && window.dropSteps(v)) || []).find((x) => /^style$/i.test(x.label));
+    const m = st && STYLES.find(([re]) => re.test(st.tool)); return m ? m[1] : '';
+  };
+  const TOOLS = [[/gemini|argon/i, 'Gemini'], [/flow/i, 'Flow'], [/kling/i, 'Kling'], [/seedance/i, 'Seedance'], [/grok/i, 'Grok'], [/higgsfield/i, 'Higgsfield'], [/chatgpt/i, 'ChatGPT'], [/claude/i, 'Claude'], [/cardboard/i, 'Cardboard']];
+  const toolsOf = (v, labelRe) => {
+    const out = new Set();
+    ((window.dropSteps && window.dropSteps(v)) || []).filter((x) => labelRe.test(x.label)).forEach((x) => String(x.tool).split(/\s*[+/]\s*/).forEach((t) => {
+      const m = TOOLS.find(([re]) => re.test(t)); const n = m ? m[1] : t.replace(/\s*\(.*\)\s*$/, '').trim(); if (n) out.add(n);
+    }));
+    return out;
+  };
+  const VIDEO_RE = /^(video|image-to-video|animation)$/i, SCRIPT_RE = /^script$/i;
   const closeGal = () => { if (gal) { gal.remove(); gal = null; galBtn.focus(); } };
   const teamVotes = () => { const c = window.dropCommunity; return c && c.ready && c.votes ? c : null; };
   const chip = (txt, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-chip' + (on ? ' on' : ''); b.textContent = txt; b.addEventListener('click', fn); return b; };
@@ -199,12 +216,20 @@
       Object.assign(document.createElement('div'), { className: 'gal-sum-box', textContent: `${rated} / ${videos.length} reviewed` }));
     if (!team) { const n = document.createElement('p'); n.className = 'gal-note'; n.textContent = (window.dropCommunity && window.dropCommunity.needed) ? `Team likes and dislikes unlock after ${window.dropCommunity.needed} reviewers (${window.dropCommunity.reviewers} so far).` : 'Team likes and dislikes show here once the team server has enough reviewers.'; gal.querySelector('.gal-sum').appendChild(n); }
 
+    all.forEach((x) => { x.style = styleOf(x.v); x.vt = toolsOf(x.v, VIDEO_RE); x.sc = toolsOf(x.v, SCRIPT_RE); });
     const filters = [['all', 'ALL'], ['up', 'LIKED'], ['down', 'DISLIKED'], ['todo', 'NOT REVIEWED']];
     const bar = gal.querySelector('.gal-filters');
-    bar.replaceChildren(...filters.map(([k, t]) => chip(t, galFilter === k, () => { galFilter = k; drawGal(); })));
-    if (team) bar.append(chip('MOST LIKED FIRST', galSort === 'liked', () => { galSort = galSort === 'liked' ? 'order' : 'liked'; drawGal(); }));
+    const row = (label, chips) => { const r = document.createElement('div'); r.className = 'gal-frow'; const l = document.createElement('span'); l.className = 'gal-flabel'; l.textContent = label; r.append(l, ...chips); return r; };
+    const countBy = (get) => { const c = new Map(); all.forEach((x) => { const g = get(x); (g instanceof Set ? [...g] : g ? [g] : []).forEach((k) => c.set(k, (c.get(k) || 0) + 1)); }); return [...c].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(b[0])); };
+    const group = (label, items, cur, set) => items.length ? row(label, items.map(([k, n]) => chip(k + ' ' + n, cur === k, () => { set(cur === k ? '' : k); drawGal(); }))) : null;
+    const main = row('SHOW', filters.map(([k, t]) => chip(t, galFilter === k, () => { galFilter = k; drawGal(); })));
+    if (team) main.append(chip('MOST LIKED FIRST', galSort === 'liked', () => { galSort = galSort === 'liked' ? 'order' : 'liked'; drawGal(); }));
+    bar.replaceChildren(...[main,
+      group('STYLE', countBy((x) => x.style), galStyle, (k) => { galStyle = k; }),
+      group('VIDEO TOOL', countBy((x) => x.vt), galVideoTool, (k) => { galVideoTool = k; }),
+      group('SCRIPT TOOL', countBy((x) => x.sc), galScript, (k) => { galScript = k; })].filter(Boolean));
 
-    let list = all.filter((x) => galFilter === 'all' || (galFilter === 'up' ? x.m.vote === 'up' : galFilter === 'down' ? x.m.vote === 'down' : !(x.m.reaction || x.m.submittedAt)));
+    let list = all.filter((x) => (!galStyle || x.style === galStyle) && (!galVideoTool || x.vt.has(galVideoTool)) && (!galScript || x.sc.has(galScript))).filter((x) => galFilter === 'all' || (galFilter === 'up' ? x.m.vote === 'up' : galFilter === 'down' ? x.m.vote === 'down' : !(x.m.reaction || x.m.submittedAt)));
     if (galSort === 'liked' && team) list = list.slice().sort((a, b) => (b.t.up - b.t.down) - (a.t.up - a.t.down) || a.i - b.i);
     const grid = gal.querySelector('.gal-grid');
     grid.replaceChildren();
@@ -242,6 +267,7 @@
     const grid = document.createElement('div'); grid.className = 'gal-grid';
     gal.append(head, sum, filters, grid); document.body.appendChild(gal);
     drawGal();
+    if (!styleCfg) fetch((window.DROP_BASE || '/') + 'review-config.json').then((r) => r.json()).then((c) => { styleCfg = c.videos || {}; drawGal(); }).catch(() => {});
     if (window.dropRefreshCommunity) setTimeout(window.dropRefreshCommunity, 900); // let this device's last votes reach the server first
     const on = grid.querySelector('.on'); if (on) on.scrollIntoView({ block: 'center' });
     x.focus();

@@ -380,3 +380,6 @@ code { background: var(--card-2); padding: 2px 6px; border-radius: 6px; }
 @media (max-width: 700px) { .add-btn { position: static; margin: 8px auto 0; display: block; width: max-content; } }
 .rv-text { flex-direction: column; align-items: stretch; gap: 8px; padding: 12px 14px; }
 .rv-text .tea { min-height: 70px; }
+.gal-filters { flex-direction: column; gap: 8px; }
+.gal-frow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gal-flabel { min-width: 82px; font-size: .66rem; font-weight: 800; letter-spacing: .1em; color: var(--muted); }
