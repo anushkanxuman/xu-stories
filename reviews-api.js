@@ -43,7 +43,7 @@ module.exports = function createReviewsApi({ root, publicDir }) {
   };
 
   /* ---------- what counts as a valid review: read from the same config the page uses ---------- */
-  let cfgCache = { mtime: 0, keys: new Set(), labels: new Map(), videos: new Set() };
+  let cfgCache = { mtime: 0, keys: new Set(), labels: new Map(), videos: new Set(), tones: new Map() };
   function config() {
     const file = path.join(publicDir, 'review-config.json');
     const mtime = fs.statSync(file).mtimeMs;
@@ -54,7 +54,9 @@ module.exports = function createReviewsApi({ root, publicDir }) {
     Object.values(cfg.categories).forEach((c) => add(c.options));
     add(cfg.style.options); add(cfg.creative.options); add(cfg.clarity.options); add(cfg.fix.options); add(cfg.tea.moods.options);
     FIELDS.forEach((f) => { keys.add('other.' + f); labels.set('other.' + f, cfg.other.label); });
-    cfgCache = { mtime, keys, labels, videos: new Set(Object.keys(cfg.videos)) };
+    const tones = new Map();
+    Object.values(cfg.categories).forEach((c) => c.options.forEach((o) => tones.set(o.key, o.tone)));
+    cfgCache = { mtime, keys, labels, videos: new Set(Object.keys(cfg.videos)), tones };
     return cfgCache;
   }
 
@@ -189,12 +191,14 @@ module.exports = function createReviewsApi({ root, publicDir }) {
           const ids = Object.keys(per);
           if (ids.length < STATS_MIN) return reply(req, res, 200, { ready: false, reviewers: ids.length, needed: STATS_MIN });
           const median = (a) => { a = a.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
-          const votes = {}, aspects = {}, totals = { up: 0, down: 0 };
+          const votes = {}, aspects = {}, tone = {}, totals = { up: 0, down: 0 }, tones = config().tones;
           for (const r of Object.values(db.records)) {
+            const tn = r.reaction && tones.get(r.reaction);
+            if (tn === 'pos' || tn === 'neg') (tone[r.videoId] = tone[r.videoId] || { pos: 0, neg: 0 })[tn]++;
             if (r.vote) { (votes[r.videoId] = votes[r.videoId] || { up: 0, down: 0 })[r.vote]++; totals[r.vote]++; }
             if (r.votes) for (const k of Object.keys(r.votes)) (aspects[k] = aspects[k] || { up: 0, down: 0 })[r.votes[k]]++;
           }
-          return reply(req, res, 200, { ready: true, votes, aspects, totals, reviewers: ids.length, medianVideos: median(ids.map((c) => per[c].size)),
+          return reply(req, res, 200, { ready: true, votes, aspects, tone, totals, reviewers: ids.length, medianVideos: median(ids.map((c) => per[c].size)),
             medianSeconds: Math.round(median(ids.map((c) => ((db.sessions[c] && db.sessions[c].totalMs) || 0) / 1000))) });
         }
 

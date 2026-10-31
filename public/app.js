@@ -248,9 +248,16 @@
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGal(); });
 
+  // local server only: a link to the "Add video" tab (the staging / static copies have no admin route, so it stays hidden there)
+  if (/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) fetch('/api/admin/ping').then((r) => (r.ok ? r.json() : null)).then((j) => {
+    if (!j || !j.admin) return;
+    const l = document.createElement('a'); l.className = 'gal-btn add-btn'; l.href = '/add.html'; l.textContent = '+ Add video'; document.body.appendChild(l);
+  }).catch(() => {});
+
   /* ---------- how it's made (eye icon) ---------- */
   const eye = $('eye'), made = $('made');
   let madeCfg = { types: {}, groups: [], videos: {} };
+  window.dropSteps = (v) => stepsFor(v); // the tools behind a video, for the tech analytics
   const stepsFor = (v) => {
     if (!v) return null;
     const own = madeCfg.videos[v.n] || madeCfg.videos[v.id];

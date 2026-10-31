@@ -121,6 +121,7 @@
   adapter.onStatus = () => { if (cur && view === 'review') renderBar(); };
   let cfg = null, optByKey = {};
   const reviews = new Map();   // videoId -> review
+  window.dropTone = (key) => (optByKey[key] || {}).tone; // 'pos' | 'neg' | 'neutral'
   window.dropReviews = () => reviews; // read-only use by the stats column and the gallery
   let cur = null;              // { video, entry, index, total } for the video on screen
   let view = 'review';         // 'review' | 'results'

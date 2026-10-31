@@ -27,6 +27,49 @@
     return r;
   };
 
+  /* WHICH TECH WINS: every like / dislike and positive / negative first impression counts for the tools used on that video.
+     Uses team numbers once the server has them, otherwise only this device's own ratings. */
+  const toolName = (s) => (/^kling/i.test(s) ? 'Kling' : /^seedance/i.test(s) ? 'Seedance' : s.replace(/\s*\(hook\)$/i, ''));
+  function techRows(match) {
+    const team = community && community.ready && community.votes ? community : null, by = {};
+    (window.drop ? window.drop.videos : []).forEach((vd) => {
+      const steps = (window.dropSteps && window.dropSteps(vd)) || [];
+      let up = 0, down = 0, pos = 0, neg = 0;
+      if (team) {
+        const vv = team.votes[vd.id] || {}, tt = (team.tone && team.tone[vd.id]) || {};
+        up = vv.up || 0; down = vv.down || 0; pos = tt.pos || 0; neg = tt.neg || 0;
+      } else {
+        const m = window.dropMine ? window.dropMine(vd.id) : {}, tn = m.reaction && window.dropTone ? window.dropTone(m.reaction) : '';
+        up = m.vote === 'up' ? 1 : 0; down = m.vote === 'down' ? 1 : 0; pos = tn === 'pos' ? 1 : 0; neg = tn === 'neg' ? 1 : 0;
+      }
+      const seen = new Set();
+      steps.filter((s) => match.test(s.label)).forEach((s) => {
+        const k = toolName(s.tool); if (seen.has(k)) return; seen.add(k);
+        const o = by[k] = by[k] || { tool: k, videos: 0, good: 0, total: 0 };
+        o.videos++; o.good += up + pos; o.total += up + down + pos + neg;
+      });
+    });
+    return Object.values(by).sort((a, b) => (b.total ? b.good / b.total : -1) - (a.total ? a.good / a.total : -1) || b.total - a.total);
+  }
+  function techCard() {
+    const c = card('WHICH TECH WINS'), team = community && community.ready && community.votes;
+    [['SCRIPT', /^script/i], ['VIDEO GEN', /^video$/i]].forEach(([title, re]) => {
+      const rows = techRows(re);
+      if (!rows.length) return;
+      c.append(el('div', 'tc-title', title));
+      rows.forEach((o, i) => {
+        const pct = o.total ? Math.round(o.good / o.total * 100) : null;
+        const r = el('div', 'tc-row' + (i === 0 && pct != null ? ' top' : ''));
+        r.append(el('span', 'tc-name', o.tool), el('b', null, pct == null ? '–' : pct + '%'));
+        const bar = el('div', 'st-bar'), f = el('i'); f.style.width = (pct || 0) + '%'; bar.append(f);
+        r.append(bar, el('small', null, `${o.videos} video${o.videos === 1 ? '' : 's'} · ${o.total} rating${o.total === 1 ? '' : 's'}`));
+        c.append(r);
+      });
+    });
+    c.append(el('p', 'st-note', (team ? `Team ratings: ${community.reviewers} reviewers.` : 'Only your own ratings so far.') + ' % = likes and good first impressions out of all ratings.'));
+    return c;
+  }
+
   function render() {
     if (!total) return;
     const ms = window.dropTime ? window.dropTime.totalMs() : 0;
@@ -84,7 +127,7 @@
     const lg = el('div', 'tr-legend'); [['new', 'new'], ['seen', 'watched'], ['rev', 'reviewed'], ['up', 'liked'], ['down', 'disliked']].forEach(([c, tx]) => { const s = el('span'); s.append(el('i', 'tr-dot ' + c), tx); lg.append(s); });
     trace.append(lg);
 
-    const nodes = [p, t, r, g, v, trace];
+    const nodes = [p, t, r, g, v, techCard(), trace];
     const n = el('section', 'st-card st-note-card');
     if (community && community.ready) {
       n.append(el('h3', null, 'TYPICAL REVIEWER'),

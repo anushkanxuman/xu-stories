@@ -11,6 +11,7 @@ const POSTERS = path.join(PUBLIC, 'posters');
 const META_FILE = path.join(ROOT, 'videos-meta.json'); // optional titles: [{ "file": "a.mp4", "title": "...", "description": "..." }]
 
 const reviewsApi = require('./reviews-api')({ root: ROOT, publicDir: PUBLIC }); // POST /api/reviews and friends
+let adminAdd = () => false; // the local-only "Add video" tab (set up below, once listVideos / makePosters exist)
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript',
@@ -83,6 +84,7 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === '/api/videos' && req.method === 'GET') return send(res, 200, listVideos());
   if (reviewsApi(req, res, url)) return;
+  if (adminAdd(req, res, url)) return;
 
   const p = safeJoin(PUBLIC, pathname === '/' ? 'index.html' : pathname.slice(1));
   return p ? serveFile(req, res, p) : send(res, 403, 'Forbidden', 'text/plain');
@@ -101,6 +103,8 @@ async function makePosters() {
 function writeManifest() { // static hosts (Vercel) read this instead of /api/videos
   fs.writeFileSync(path.join(PUBLIC, 'videos.json'), JSON.stringify(listVideos(), null, 2));
 }
+
+adminAdd = require('./admin-add')({ root: ROOT, publicDir: PUBLIC, listVideos, makePosters, writeManifest });
 
 module.exports = { makePosters, writeManifest };
 

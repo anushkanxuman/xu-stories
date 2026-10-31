@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Add a video · Xu's Stories</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .add { width: min(760px, 100%); padding: 18px 16px 60px; display: flex; flex-direction: column; gap: 14px; }
+    .add h1 { margin: 0; font-size: 1.8rem; letter-spacing: -.02em; }
+    .add .top-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .add a.ghost { text-decoration: none; display: inline-block; }
+    .box { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 16px 18px; display: flex; flex-direction: column; gap: 10px; }
+    .box h2 { margin: 0; font-size: .75rem; letter-spacing: .12em; color: var(--accent-2); }
+    .drop { border: 2px dashed var(--line-2); border-radius: 14px; padding: 22px; text-align: center; color: var(--muted); cursor: pointer; background: var(--card-2); }
+    .drop.over, .drop:hover { border-color: var(--accent); }
+    .drop b { color: var(--text); }
+    .pick { display: flex; gap: 14px; align-items: flex-start; }
+    .pick video { width: 110px; aspect-ratio: 9 / 16; border-radius: 12px; background: #000; object-fit: cover; flex: none; }
+    .pick .meta { font-size: .85rem; color: var(--muted); word-break: break-all; }
+    textarea, input[type=text], select { width: 100%; font: inherit; color: var(--text); background: var(--card-2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+    textarea { min-height: 120px; resize: vertical; }
+    textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+    .count { font-size: .72rem; color: var(--muted); text-align: right; }
+    .steps { display: flex; flex-direction: column; gap: 8px; }
+    .step { display: grid; grid-template-columns: 130px 1fr 34px; gap: 8px; align-items: center; }
+    .step .x { border: 1px solid var(--line); background: var(--card-2); border-radius: 10px; height: 38px; color: var(--muted); }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+    .row label { display: flex; align-items: center; gap: 8px; font-size: .85rem; }
+    .row select { width: auto; min-width: 200px; }
+    .tag { font-size: .65rem; letter-spacing: .08em; border: 1px solid var(--line); border-radius: 10px; padding: 1px 7px; color: var(--muted); }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chips .made-chip { display: inline-flex; gap: 6px; align-items: baseline; padding: 4px 10px; border-radius: 12px; background: var(--card-2); border: 1px solid var(--line); font-size: .8rem; }
+    .chips i { font-style: normal; color: var(--muted); }
+    .bar { height: 8px; border-radius: 6px; background: var(--bar); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--pink)); transition: width .2s; }
+    .msg { font-size: .9rem; } .msg.err { color: #c0262d; } .msg.ok { color: var(--ok); font-weight: 700; }
+    .only { padding: 40px 16px; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="add" id="app" hidden>
+    <div class="top-row"><h1>Add a video</h1><a class="ghost" href="/">← Back to the feed</a></div>
+    <p class="st-sub" style="margin:0">Three things: the video, its caption, and the tech used. The number, poster, review questions and the spot in the feed are done for you.</p>
+
+    <section class="box">
+      <h2>1 · VIDEO</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a video file"><b>Drop the video here</b> or click to choose<br><small>.mp4 .mov .m4v .webm</small></div>
+      <input id="file" type="file" accept="video/*,.mp4,.mov,.m4v,.webm" hidden>
+      <div class="pick" id="pick" hidden><video id="pv" muted playsinline controls></video><div class="meta" id="pm"></div></div>
+    </section>
+
+    <section class="box">
+      <h2>2 · CAPTION</h2>
+      <textarea id="cap" placeholder="Paste the caption (hashtags and emojis are fine)"></textarea>
+      <div class="count" id="cc">0 / 3000</div>
+    </section>
+
+    <section class="box">
+      <h2>3 · TECH USED</h2>
+      <div class="steps" id="steps"></div>
+      <div class="row"><button class="ghost" id="addStep" type="button">+ ADD A STEP</button><span class="st-sub" id="hint">Shown to reviewers under the eye icon.</span></div>
+      <div class="chips" id="chips" aria-label="Preview"></div>
+    </section>
+
+    <section class="box">
+      <h2>OPTIONS (AUTO-FILLED)</h2>
+      <div class="row"><label>Review questions <select id="cat"></select></label><span class="tag" id="auto" hidden>AUTO-PICKED</span></div>
+      <div class="row"><label><input type="checkbox" id="spread" checked> Spread it through the feed (not bunched at the end)</label></div>
+      <div class="st-sub" id="next"></div>
+    </section>
+
+    <div class="bar" id="bar" hidden><i></i></div>
+    <div class="msg" id="msg" aria-live="polite"></div>
+    <div class="bar-btns"><button class="cta" id="go" type="button" disabled>ADD VIDEO</button></div>
+  </main>
+  <div class="only" id="only">Checking…</div>
+  <datalist id="labels"></datalist><datalist id="tools"></datalist>
+  <script src="add.js"></script>
+</body>
+</html>
