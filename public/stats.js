@@ -17,6 +17,16 @@
   };
   const row = (k, v) => { const r = el('div', 'st-row'); r.append(el('span', null, k), el('b', null, v)); return r; };
 
+  const ASPECTS = [['reaction', 'First look'], ['secondary', 'Follow-up'], ['creative', 'Creativity'], ['clarity', 'Did it land'], ['style', 'Visual'], ['fix', 'The fix']];
+  const vrow = (label, up, down, bold) => { // label ... 👍 n  👎 n, with a green / pink split bar underneath
+    const r = el('div', 'st-vrow' + (bold ? ' bold' : '')), tot = up + down;
+    const a = el('span', 'gv up'), b = el('span', 'gv down');
+    a.append(window.dropThumb('up'), document.createTextNode(String(up))); b.append(window.dropThumb('down'), document.createTextNode(String(down)));
+    r.append(el('span', 'st-vl', label), a, b);
+    if (tot) { const bar = el('div', 'st-split'), f = el('i'); f.style.width = (up / tot * 100) + '%'; bar.append(f); r.append(bar); }
+    return r;
+  };
+
   function render() {
     if (!total) return;
     const ms = window.dropTime ? window.dropTime.totalMs() : 0;
@@ -50,7 +60,31 @@
     if (left) g.append(el('p', 'st-sub', `About ${Math.max(1, Math.round(left * pace.secondsPerVideo / 60))} min left at the goal pace.`));
     else g.append(el('p', 'st-sub', 'All done. Check your results.'));
 
-    const nodes = [p, t, r, g];
+    // YOUR VOTES (optional likes / dislikes, overall and per question)
+    const mineAll = [...(window.dropReviews ? window.dropReviews().values() : [])];
+    let up = 0, down = 0; const asp = {};
+    mineAll.forEach((x) => { if (x.vote === 'up') up++; else if (x.vote === 'down') down++; Object.entries(x.votes || {}).forEach(([k, d]) => { (asp[k] = asp[k] || { up: 0, down: 0 })[d]++; }); });
+    const v = card('YOUR VOTES');
+    v.append(vrow('Videos', up, down, true), ...ASPECTS.filter(([k]) => asp[k]).map(([k, label]) => vrow(label, asp[k].up, asp[k].down)));
+    if (!up && !down && !Object.keys(asp).length) v.append(el('p', 'st-sub', 'Tap 👍 or 👎 anywhere in the review. Optional.'));
+
+    // YOUR TRACE: one dot per video, in feed order; tap to jump there
+    const trace = card('YOUR TRACE'), grid = el('div', 'tr-grid');
+    let seen = 0, finished = 0, pctSum = 0;
+    (window.drop ? window.drop.videos : []).forEach((vd, i) => {
+      const w = window.dropTime ? window.dropTime.watch(vd.id) : { pct: 0, done: 0 }, m = window.dropMine ? window.dropMine(vd.id) : {};
+      const state = m.vote === 'up' ? 'up' : m.vote === 'down' ? 'down' : (m.reaction || m.submittedAt) ? 'rev' : w.pct > 0 ? 'seen' : 'new';
+      if (w.pct > 0) { seen++; pctSum += w.pct; } if (w.done) finished++;
+      const d = el('button', 'tr-dot ' + state); d.type = 'button'; d.title = `Video ${i + 1}: ${w.pct}% watched`; d.setAttribute('aria-label', d.title);
+      if (cur && cur.index === i) d.classList.add('now');
+      d.addEventListener('click', () => window.drop.goTo(i));
+      grid.append(d);
+    });
+    trace.append(grid, row('Watched', `${seen} / ${total}`), row('Avg. watched', seen ? Math.round(pctSum / seen) + '%' : '0%'), row('Played to the end', String(finished)));
+    const lg = el('div', 'tr-legend'); [['new', 'new'], ['seen', 'watched'], ['rev', 'reviewed'], ['up', 'liked'], ['down', 'disliked']].forEach(([c, tx]) => { const s = el('span'); s.append(el('i', 'tr-dot ' + c), tx); lg.append(s); });
+    trace.append(lg);
+
+    const nodes = [p, t, r, g, v, trace];
     const n = el('section', 'st-card st-note-card');
     if (community && community.ready) {
       n.append(el('h3', null, 'TYPICAL REVIEWER'),
@@ -60,6 +94,11 @@
       n.append(el('p', 'st-note', community && community.needed
         ? `Compare with other reviewers unlocks after ${community.needed} people have reviewed (${community.reviewers} so far).`
         : 'Your numbers stay on this device unless the team server is on.'));
+    }
+    if (community && community.ready && community.totals) {
+      const tm = card('TEAM VOTES');
+      tm.append(vrow('Videos', community.totals.up, community.totals.down, true), ...ASPECTS.filter(([k]) => community.aspects && community.aspects[k]).map(([k, label]) => vrow(label, community.aspects[k].up, community.aspects[k].down)));
+      nodes.push(tm);
     }
     nodes.push(n);
     root.replaceChildren(...nodes);
@@ -76,6 +115,7 @@
   document.addEventListener('timeupdate', (e) => { if (e.target.tagName === 'VIDEO' && cur) { const t = Date.now(); if (t - (render.lastWatch || 0) > 1000) { render.lastWatch = t; soon(); } } }, true);
 
   fetch((window.DROP_BASE || '/') + 'review-config.json').then((r) => r.json()).then((c) => { if (c.pace) pace = c.pace; soon(); }).catch(() => {});
-  const loadCommunity = () => fetch(((document.querySelector('meta[name="review-api"]') || {}).content || '/api/reviews').replace(/\/$/, '') + '/stats').then((r) => (r.ok ? r.json() : null)).then((j) => { community = j; soon(); }).catch(() => {});
+  const loadCommunity = () => fetch(((document.querySelector('meta[name="review-api"]') || {}).content || '/api/reviews').replace(/\/$/, '') + '/stats').then((r) => (r.ok ? r.json() : null)).then((j) => { community = j; window.dropCommunity = j; document.dispatchEvent(new CustomEvent('drop:community')); soon(); }).catch(() => {});
+  window.dropRefreshCommunity = loadCommunity; // the gallery asks for fresh team numbers when it opens
   loadCommunity(); setInterval(loadCommunity, 60000);
 })();

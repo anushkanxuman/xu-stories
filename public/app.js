@@ -166,12 +166,70 @@
     },
   };
 
-  /* ---------- gallery: every video as a tile, tap to jump there ---------- */
+  /* ---------- shared bits for the stats column and the gallery ---------- */
+  window.dropThumb = (dir) => { // small thumbs up / down icon
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true'); s.setAttribute('class', 'th');
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', 'M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3zm2 9V10.5l3.5-6.2a1.6 1.6 0 0 1 3 .8L15 9h4.6a2 2 0 0 1 2 2.4l-1.3 6.8a2.5 2.5 0 0 1-2.5 1.8H9z');
+    if (dir === 'down') p.setAttribute('transform', 'rotate(180 12 12)');
+    s.appendChild(p); return s;
+  };
+  window.dropMine = (id) => { const r = window.dropReviews && window.dropReviews().get(id); return r || {}; };
+
+  /* ---------- gallery: every video as a tile with its likes / dislikes, filters on top ---------- */
   const galBtn = document.createElement('button');
   galBtn.className = 'gal-btn'; galBtn.type = 'button'; galBtn.textContent = '▦ Gallery'; galBtn.setAttribute('aria-haspopup', 'dialog');
   document.body.appendChild(galBtn);
-  let gal = null;
+  let gal = null, galFilter = 'all', galSort = 'order';
   const closeGal = () => { if (gal) { gal.remove(); gal = null; galBtn.focus(); } };
+  const teamVotes = () => { const c = window.dropCommunity; return c && c.ready && c.votes ? c : null; };
+  const chip = (txt, on, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-chip' + (on ? ' on' : ''); b.textContent = txt; b.addEventListener('click', fn); return b; };
+  const pill = (dir, n) => { const s = document.createElement('span'); s.className = 'gv ' + dir; s.append(window.dropThumb(dir), document.createTextNode(String(n))); return s; };
+
+  function drawGal() {
+    if (!gal) return;
+    const team = teamVotes(), mine = (v) => window.dropMine(v.id);
+    const all = videos.map((v, i) => ({ v, i, m: mine(v), t: team ? team.votes[v.id] || { up: 0, down: 0 } : null }));
+    let up = 0, down = 0, rated = 0;
+    all.forEach((x) => { if (x.m.vote === 'up') up++; else if (x.m.vote === 'down') down++; if (x.m.reaction || x.m.submittedAt) rated++; });
+
+    gal.querySelector('.gal-sum').replaceChildren(
+      ...[['YOU', pill('up', up), pill('down', down)], team ? ['TEAM', pill('up', team.totals.up), pill('down', team.totals.down)] : null]
+        .filter(Boolean).map(([k, a, b]) => { const d = document.createElement('div'); d.className = 'gal-sum-box'; const l = document.createElement('span'); l.textContent = k; d.append(l, a, b); return d; }),
+      Object.assign(document.createElement('div'), { className: 'gal-sum-box', textContent: `${rated} / ${videos.length} reviewed` }));
+    if (!team) { const n = document.createElement('p'); n.className = 'gal-note'; n.textContent = (window.dropCommunity && window.dropCommunity.needed) ? `Team likes and dislikes unlock after ${window.dropCommunity.needed} reviewers (${window.dropCommunity.reviewers} so far).` : 'Team likes and dislikes show here once the team server has enough reviewers.'; gal.querySelector('.gal-sum').appendChild(n); }
+
+    const filters = [['all', 'ALL'], ['up', 'LIKED'], ['down', 'DISLIKED'], ['todo', 'NOT REVIEWED']];
+    const bar = gal.querySelector('.gal-filters');
+    bar.replaceChildren(...filters.map(([k, t]) => chip(t, galFilter === k, () => { galFilter = k; drawGal(); })));
+    if (team) bar.append(chip('MOST LIKED FIRST', galSort === 'liked', () => { galSort = galSort === 'liked' ? 'order' : 'liked'; drawGal(); }));
+
+    let list = all.filter((x) => galFilter === 'all' || (galFilter === 'up' ? x.m.vote === 'up' : galFilter === 'down' ? x.m.vote === 'down' : !(x.m.reaction || x.m.submittedAt)));
+    if (galSort === 'liked' && team) list = list.slice().sort((a, b) => (b.t.up - b.t.down) - (a.t.up - a.t.down) || a.i - b.i);
+    const grid = gal.querySelector('.gal-grid');
+    grid.replaceChildren();
+    if (!list.length) { const e = document.createElement('p'); e.className = 'gal-note'; e.textContent = 'Nothing here yet.'; grid.appendChild(e); return; }
+    list.forEach(({ v, i, m, t }) => {
+      const tile = document.createElement('button'); tile.type = 'button'; tile.className = 'gal-tile' + (i === active ? ' on' : '') + (m.vote ? ' v-' + m.vote : '');
+      if (v.poster) { const im = document.createElement('img'); im.src = v.poster; im.alt = ''; im.loading = 'lazy'; tile.appendChild(im); }
+      const votes = document.createElement('span'); votes.className = 'gal-votes';
+      // like Instagram: a count after each icon, always shown. Team totals once the server has enough reviewers, else this device's own vote.
+      const n = t || { up: m.vote === 'up' ? 1 : 0, down: m.vote === 'down' ? 1 : 0 };
+      const pu = pill('up', n.up), pd = pill('down', n.down);
+      if (m.vote === 'up') pu.classList.add('mine'); if (m.vote === 'down') pd.classList.add('mine'); // your own vote is lit
+      votes.append(pu, pd);
+      const mk = slides[i] && slides[i].querySelector('.mark');
+      if (mk && !mk.hidden) { const e = document.createElement('span'); e.className = 'gal-mark'; e.textContent = mk.textContent; tile.appendChild(e); }
+      const c = document.createElement('span'); c.className = 'gal-cap'; c.textContent = (window.dropNums ? '#' + v.n + ' ' : '') + (v.caption || `Video ${i + 1}`);
+      const foot = document.createElement('span'); foot.className = 'gal-foot'; foot.append(c, votes);
+      tile.appendChild(foot);
+      tile.addEventListener('click', () => { const k = i; closeGal(); goTo(k); });
+      grid.appendChild(tile);
+    });
+  }
+  document.addEventListener('drop:community', drawGal);
+  document.addEventListener('drop:review', drawGal);
+
   galBtn.addEventListener('click', () => {
     if (gal || !videos.length) return;
     gal = document.createElement('div'); gal.className = 'gal'; gal.setAttribute('role', 'dialog'); gal.setAttribute('aria-modal', 'true'); gal.setAttribute('aria-label', 'All videos');
@@ -179,18 +237,12 @@
     const h = document.createElement('h2'); h.textContent = `All videos (${videos.length})`;
     const x = document.createElement('button'); x.type = 'button'; x.className = 'ghost'; x.textContent = 'CLOSE'; x.addEventListener('click', closeGal);
     head.append(h, x);
+    const sum = document.createElement('div'); sum.className = 'gal-sum';
+    const filters = document.createElement('div'); filters.className = 'gal-filters';
     const grid = document.createElement('div'); grid.className = 'gal-grid';
-    videos.forEach((v, i) => {
-      const t = document.createElement('button'); t.type = 'button'; t.className = 'gal-tile' + (i === active ? ' on' : '');
-      if (v.poster) { const im = document.createElement('img'); im.src = v.poster; im.alt = ''; im.loading = 'lazy'; t.appendChild(im); }
-      const mk = slides[i] && slides[i].querySelector('.mark');
-      if (mk && !mk.hidden) { const m = document.createElement('span'); m.className = 'gal-mark'; m.textContent = mk.textContent; t.appendChild(m); }
-      const c = document.createElement('span'); c.className = 'gal-cap'; c.textContent = (window.dropNums ? '#' + v.n + ' ' : '') + (v.caption || `Video ${i + 1}`);
-      t.appendChild(c);
-      t.addEventListener('click', () => { const k = i; closeGal(); goTo(k); });
-      grid.appendChild(t);
-    });
-    gal.append(head, grid); document.body.appendChild(gal);
+    gal.append(head, sum, filters, grid); document.body.appendChild(gal);
+    drawGal();
+    if (window.dropRefreshCommunity) setTimeout(window.dropRefreshCommunity, 900); // let this device's last votes reach the server first
     const on = grid.querySelector('.on'); if (on) on.scrollIntoView({ block: 'center' });
     x.focus();
   });

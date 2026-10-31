@@ -189,7 +189,12 @@ module.exports = function createReviewsApi({ root, publicDir }) {
           const ids = Object.keys(per);
           if (ids.length < STATS_MIN) return reply(req, res, 200, { ready: false, reviewers: ids.length, needed: STATS_MIN });
           const median = (a) => { a = a.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
-          return reply(req, res, 200, { ready: true, reviewers: ids.length, medianVideos: median(ids.map((c) => per[c].size)),
+          const votes = {}, aspects = {}, totals = { up: 0, down: 0 };
+          for (const r of Object.values(db.records)) {
+            if (r.vote) { (votes[r.videoId] = votes[r.videoId] || { up: 0, down: 0 })[r.vote]++; totals[r.vote]++; }
+            if (r.votes) for (const k of Object.keys(r.votes)) (aspects[k] = aspects[k] || { up: 0, down: 0 })[r.votes[k]]++;
+          }
+          return reply(req, res, 200, { ready: true, votes, aspects, totals, reviewers: ids.length, medianVideos: median(ids.map((c) => per[c].size)),
             medianSeconds: Math.round(median(ids.map((c) => ((db.sessions[c] && db.sessions[c].totalMs) || 0) / 1000))) });
         }
 

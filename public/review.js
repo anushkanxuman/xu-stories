@@ -121,6 +121,7 @@
   adapter.onStatus = () => { if (cur && view === 'review') renderBar(); };
   let cfg = null, optByKey = {};
   const reviews = new Map();   // videoId -> review
+  window.dropReviews = () => reviews; // read-only use by the stats column and the gallery
   let cur = null;              // { video, entry, index, total } for the video on screen
   let view = 'review';         // 'review' | 'results'
   let saveErr = false, justDropped = false;
@@ -354,35 +355,20 @@
     const fill = $('.rv-prog i'); if (fill) fill.style.width = (cur.total ? (touched / cur.total) * 100 : 0) + '%';
   }
 
-  function renderBar() {
+  function renderBar() { // one button: everything above saves by itself, NEXT just moves on
     if (!cur) return;
     if (view === 'results') return;
     const st = statusOf(reviews.get(cur.video.id));
     const last = cur.index === cur.total - 1;
-    const next = el('button', { class: 'cta next', type: 'button', text: last ? 'SEE MY RESULTS →' : 'NEXT UP →', onclick: () => { justDropped = false; last ? renderResults() : window.drop.goTo(cur.index + 1); } });
-    let note, btns;
-    if (st === 'submitted') {
-      note = el('div', { class: 'bar-note ok', 'aria-live': 'polite', text: justDropped ? 'OKAYYY, YOU DID YOUR THING.' : `✓ Verdict dropped · ${adapter.label}` });
-      btns = [next];
-    } else {
-      note = el('div', { class: 'bar-note' + (saveErr ? ' err' : ''), 'aria-live': 'polite' });
-      note.textContent = saveErr ? "Couldn't save on this device. Your answers stay until you close this page."
-        : st === 'none' ? 'Tap anything above to start. All of it is optional.' : adapter.label;
-      const drop = el('button', { class: 'cta', type: 'button', text: 'DROP THE VERDICT', disabled: st === 'none', onclick: dropVerdict });
-      btns = [el('button', { class: 'skip', type: 'button', text: 'SKIP →', title: "Move on without a verdict. Nothing gets marked.", onclick: () => (last ? renderResults() : window.drop.goTo(cur.index + 1)) }), drop];
-    }
-    if (st === 'submitted' && saveErr) note.classList.add('err');
-    bar.replaceChildren(note, el('div', { class: 'bar-btns' }, btns));
-  }
-
-  function dropVerdict() {
-    edit((x) => { x.submittedAt = x.submittedAt || Date.now(); });
-    justDropped = true; renderBar();
-    for (let i = 0; i < 14; i++) {
-      const c = el('span', { class: 'confetti', 'aria-hidden': 'true', text: ['🎉', '✨', '💜', '🔥', '💖'][i % 5] });
-      c.style.setProperty('--dx', (Math.random() * 260 - 130) + 'px'); c.style.setProperty('--dy', -(120 + Math.random() * 160) + 'px'); c.style.setProperty('--r', (Math.random() * 120 - 60) + 'deg');
-      panel.append(c); setTimeout(() => c.remove(), 1100);
-    }
+    const go = () => {
+      const r = reviews.get(cur.video.id);
+      if (hasAny(r) && !r.submittedAt) edit((x) => { x.submittedAt = Date.now(); }); // anything answered counts as reviewed
+      last ? renderResults() : window.drop.goTo(cur.index + 1);
+    };
+    const note = el('div', { class: 'bar-note' + (saveErr ? ' err' : st !== 'none' ? ' ok' : ''), 'aria-live': 'polite' });
+    note.textContent = saveErr ? "Couldn't save on this device. Your answers stay until you close this page."
+      : st === 'none' ? 'Tap anything above. It all saves by itself, all optional.' : `✓ Saved · ${adapter.label}`;
+    bar.replaceChildren(note, el('div', { class: 'bar-btns' }, el('button', { class: 'cta', type: 'button', text: last ? 'SEE MY RESULTS →' : 'NEXT →', onclick: go })));
   }
 
   /* ---------- name first: a full-screen gate before anything else ---------- */
@@ -401,7 +387,7 @@
     gate.append(el('div', { class: 'gate-card' },
       el('p', { class: 'rv-kicker', text: 'BEFORE YOU START' }),
       el('h2', { text: "Who's judging?" }),
-      el('p', { class: 'cd-prompt', text: 'Your name goes on every verdict you drop, so the Xuman team knows who said what.' }),
+      el('p', { class: 'cd-prompt', text: 'Your name goes on every review you give, so the Xuman team knows who said what.' }),
       input,
       el('div', { class: 'bar-btns' },
         el('button', { class: 'skip', type: 'button', text: 'STAY ANONYMOUS', onclick: () => done(true) }),
@@ -423,7 +409,7 @@
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
     const w = el('section', { class: 'card open', dataset: { accent: 'pink' } },
       el('div', { class: 'cd-head', style: 'cursor:default' }, el('span', { class: 'cd-title', text: 'FIRST THINGS FIRST 👋' })),
-      el('div', { class: 'cd-body' }, el('p', { class: 'cd-prompt', text: editing ? 'Change the name on your verdicts.' : 'What should we call you? Your name goes on every verdict you drop.' }), input));
+      el('div', { class: 'cd-body' }, el('p', { class: 'cd-prompt', text: editing ? 'Change the name on your reviews.' : 'What should we call you? Your name goes on every verdict you drop.' }), input));
     body.replaceChildren(el('div', { class: 'rv-head' }, el('div', { class: 'rv-title' }, el('h2', { text: "WHO'S JUDGING?" }))), w);
     body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap');
     bar.replaceChildren(el('div', { class: 'bar-note', text: adapter.shares ? 'Your name and the time you spend here go to the Xuman team with your verdicts.' : 'Saved on this device. Only used to label your verdicts.' }),
