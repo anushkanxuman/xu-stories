@@ -411,6 +411,26 @@
           "tool": "Photorealistic cinematic short film"
         }
       ]
+    },
+    "75": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "Claude"
+        },
+        {
+          "label": "Character",
+          "tool": "Grok"
+        },
+        {
+          "label": "Video",
+          "tool": "Grok Imagine"
+        },
+        {
+          "label": "Style",
+          "tool": "Ultra-photorealistic cinematic comedy"
+        }
+      ]
     }
   }
 }
