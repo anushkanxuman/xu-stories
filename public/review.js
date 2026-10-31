@@ -264,7 +264,7 @@
     const nameBtn = el('button', { class: 'ghost name-chip', type: 'button', title: 'Change your name', text: nick ? '👤 ' + nick : '+ ADD NAME', onclick: () => renderWelcome(true) });
 
     const head = el('div', { class: 'rv-head' },
-      el('div', { class: 'rv-title' }, el('h2', { text: window.dropNums ? `VIDEO #${pad(entry.n)}` : 'THIS DROP' }), el('span', { class: 'rv-pos', text: `${index + 1} / ${total}` }), nameBtn, resBtn),
+      el('div', { class: 'rv-title' }, el('h2', { text: window.dropNums ? `VIDEO #${pad(entry.n)}` : 'THIS VIDEO' }), el('span', { class: 'rv-pos', text: `${index + 1} / ${total}` }), nameBtn, resBtn),
       el('div', { class: 'rv-sub' }, el('div', { class: 'rv-stats' })),
       el('div', { class: 'rv-prog' }, el('i')));
 
@@ -297,7 +297,7 @@
     const box = $('.rv-stats'); if (!box || !cur) return;
     const { submitted, touched } = counts();
     box.replaceChildren(
-      el('span', {}, el('b', { text: submitted }), submitted === 1 ? ' verdict' : ' verdicts'),
+      el('span', {}, el('b', { text: submitted }), submitted === 1 ? ' review' : ' reviews'),
       el('span', { text: `${touched}/${cur.total}` }),
       el('span', { class: 'rv-time', title: 'Time you have actively spent here', text: '⏱ ' + (window.dropTime ? window.dropTime.format(window.dropTime.totalMs()) : '0:00') }));
     const fill = $('.rv-prog i'); if (fill) fill.style.width = (cur.total ? (touched / cur.total) * 100 : 0) + '%';
@@ -311,7 +311,7 @@
     const go = () => { last ? renderResults() : window.drop.goTo(cur.index + 1); };
     const note = el('div', { class: 'bar-note' + (saveErr ? ' err' : st !== 'none' ? ' ok' : ''), 'aria-live': 'polite' });
     note.textContent = saveErr ? "Couldn't save on this device. Your answers stay until you close this page."
-      : st === 'none' ? 'Tap anything above. It saves by itself, all optional.' : `✓ Saved · ${adapter.label}`;
+      : st === 'none' ? 'Your answers save automatically. All fields are optional.' : `✓ Saved · ${adapter.label}`;
     bar.replaceChildren(note, el('div', { class: 'bar-btns' }, el('button', { class: 'cta', type: 'button', text: last ? 'SEE MY RESULTS →' : 'NEXT →', onclick: go })));
   }
 
@@ -330,12 +330,12 @@
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') done(false); });
     gate.append(el('div', { class: 'gate-card' },
       el('p', { class: 'rv-kicker', text: 'BEFORE YOU START' }),
-      el('h2', { text: "Who's judging?" }),
+      el('h2', { text: 'Your name' }),
       el('p', { class: 'cd-prompt', text: 'Your name goes on every review you give, so the Xuman team knows who said what.' }),
       input,
       el('div', { class: 'bar-btns' },
         el('button', { class: 'skip', type: 'button', text: 'STAY ANONYMOUS', onclick: () => done(true) }),
-        el('button', { class: 'cta', type: 'button', text: "LET'S GO →", onclick: () => done(false) }))));
+        el('button', { class: 'cta', type: 'button', text: 'CONTINUE →', onclick: () => done(false) }))));
     document.body.append(gate);
     try { const c = window.drop && window.drop.current(); if (c && c.el) c.el.pause(); } catch (e) { /* not ready yet */ }
     input.focus({ preventScroll: true });
@@ -352,14 +352,14 @@
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
     const w = el('section', { class: 'card open', dataset: { accent: 'pink' } },
-      el('div', { class: 'cd-head', style: 'cursor:default' }, el('span', { class: 'cd-title', text: 'FIRST THINGS FIRST 👋' })),
-      el('div', { class: 'cd-body' }, el('p', { class: 'cd-prompt', text: editing ? 'Change the name on your reviews.' : 'What should we call you? Your name goes on every verdict you drop.' }), input));
-    body.replaceChildren(el('div', { class: 'rv-head' }, el('div', { class: 'rv-title' }, el('h2', { text: "WHO'S JUDGING?" }))), w);
+      el('div', { class: 'cd-head', style: 'cursor:default' }, el('span', { class: 'cd-title', text: 'YOUR NAME' })),
+      el('div', { class: 'cd-body' }, el('p', { class: 'cd-prompt', text: editing ? 'Change the name on your reviews.' : 'Enter your name. It is attached to every review you submit.' }), input));
+    body.replaceChildren(el('div', { class: 'rv-head' }, el('div', { class: 'rv-title' }, el('h2', { text: 'REVIEWER' }))), w);
     body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap');
-    bar.replaceChildren(el('div', { class: 'bar-note', text: adapter.shares ? 'Your name and the time you spend here go to the Xuman team with your verdicts.' : 'Saved on this device. Only used to label your verdicts.' }),
+    bar.replaceChildren(el('div', { class: 'bar-note', text: adapter.shares ? 'Your name and the time you spend here go to the Xuman team with your reviews.' : 'Saved on this device. Only used to label your reviews.' }),
       el('div', { class: 'bar-btns' },
         el('button', { class: 'skip', type: 'button', text: editing ? 'BACK' : 'SKIP', onclick: () => { if (!editing) store.set('xs-name-asked', '1'); view = 'review'; renderReview(); } }),
-        el('button', { class: 'cta', type: 'button', text: editing ? 'SAVE NAME' : "LET'S GO →", onclick: go })));
+        el('button', { class: 'cta', type: 'button', text: editing ? 'SAVE NAME' : 'CONTINUE →', onclick: go })));
     if (window.matchMedia('(min-width: 981px)').matches) input.focus({ preventScroll: true });
   }
 
@@ -377,9 +377,9 @@
     };
     const { reacted, submitted } = counts();
     const secs = [el('div', { class: 'rv-head res' },
-      el('div', { class: 'rv-kicker', text: 'YOUR FEED, YOUR VERDICT' }),
+      el('div', { class: 'rv-kicker', text: 'REVIEW SUMMARY' }),
       el('h2', { text: 'YOUR RESULTS' }),
-      el('p', { class: 'sub', text: `${submitted} verdict${submitted === 1 ? '' : 's'} dropped · ${reacted} reacted · ${adapter.label}` }))];
+      el('p', { class: 'sub', text: `${submitted} video${submitted === 1 ? '' : 's'} reviewed · ${adapter.label}` }))];
 
     if (window.dropTime) {
       const t = window.dropTime.snapshot(), f = window.dropTime.format;
@@ -390,51 +390,26 @@
         top.length ? el('ul', { class: 'res-list', style: 'margin-top:8px' }, top.map(([id, ms]) => row({ videoId: id, n: cfg.videos[id].n }, el('span', { text: f(ms) })))) : null));
     }
     if (!all.length) {
-      secs.push(el('div', { class: 'state' }, el('h3', { text: 'Nothing here yet.' }), el('p', { text: 'Your taste is still under investigation. 👁️ React to a video and it shows up here.' })));
+      secs.push(el('div', { class: 'state' }, el('h3', { text: 'No reviews yet.' }), el('p', { text: 'Review a video and it will show up here.' })));
     } else {
-      const loved = all.filter((r) => r.reaction && optByKey[r.reaction] && optByKey[r.reaction].tone === 'pos').sort((a, b) => b.updatedAt - a.updatedAt);
-      const relatable = all.filter((r) => r.reaction === 'fun.relatable');
       const sec = (title, list, extraFn) => list.length ? el('div', { class: 'res-sec' }, el('h3', { text: title }), el('ul', { class: 'res-list' }, list.slice(0, 6).map((r) => row(r, extraFn ? extraFn(r) : null)))) : null;
+      const mark = (d) => el('span', { text: d === 'up' ? '👍' : '👎' });
       secs.push(
-        sec('VIDEOS YOU LOVED', loved, (r) => el('span', { text: optByKey[r.reaction].emoji })),
-        sec('MOST RELATABLE', relatable, () => el('span', { text: '🫠' })));
-
-      const creative = all.filter((r) => r.creative && optByKey[r.creative] && optByKey[r.creative].score);
-      if (creative.length) {
-        const avg = creative.reduce((s, r) => s + optByKey[r.creative].score, 0) / creative.length;
-        const top = creative.filter((r) => optByKey[r.creative].tone === 'pos').sort((a, b) => optByKey[b.creative].score - optByKey[a.creative].score || b.updatedAt - a.updatedAt);
-        secs.push(el('div', { class: 'res-sec' }, el('h3', { text: 'CREATIVITY CHECK' }),
-          el('p', { text: `You rated ${creative.length} video${creative.length === 1 ? '' : 's'} · average ${avg.toFixed(1)} / 4` }),
-          top.length ? el('ul', { class: 'res-list', style: 'margin-top:8px' }, top.slice(0, 4).map((r) => row(r, el('span', { text: optByKey[r.creative].emoji })))) : null));
-      }
-
-      const styleCount = {};
-      all.forEach((r) => { const e = cfg.videos[r.videoId]; if (r.style && optByKey[r.style] && optByKey[r.style].tone === 'pos' && e && e.style) styleCount[e.style] = (styleCount[e.style] || 0) + 1; });
-      const styles = Object.entries(styleCount).sort((a, b) => b[1] - a[1]);
-      if (styles.length) secs.push(el('div', { class: 'res-sec' }, el('h3', { text: 'STYLES YOU RATED HIGHLY' }), el('p', { text: styles.map(([s, n]) => `${s} ×${n}`).join(' · ') })));
-
-      const fixCount = {};
-      all.forEach((r) => { if (r.fix && r.fix !== 'fix.nothing') fixCount[r.fix] = (fixCount[r.fix] || 0) + 1; });
-      const fixes = Object.entries(fixCount).sort((a, b) => b[1] - a[1]);
-      if (fixes.length) secs.push(el('div', { class: 'res-sec' }, el('h3', { text: 'WHAT YOU WOULD FIX MOST' }), el('p', { text: fixes.map(([k, n]) => `${optByKey[k].label} ×${n}`).join(' · ') })));
-
-      const teas = all.filter((r) => r.tea).sort((a, b) => b.updatedAt - a.updatedAt);
-      if (teas.length) secs.push(el('div', { class: 'res-sec' }, el('h3', { text: 'YOUR TEA' }), el('ul', { class: 'res-list' }, teas.slice(0, 3).map((r) => row(r, [r.teaMood ? el('span', { text: optByKey[r.teaMood].emoji }) : null, el('q', { class: 't', text: r.tea })], true)))));
+        sec('LIKED', all.filter((r) => r.vote === 'up').sort((a, b) => b.updatedAt - a.updatedAt), () => mark('up')),
+        sec('DISLIKED', all.filter((r) => r.vote === 'down').sort((a, b) => b.updatedAt - a.updatedAt), () => mark('down')),
+        sec('SUGGESTIONS', all.filter((r) => r.fixDetail).sort((a, b) => b.updatedAt - a.updatedAt), (r) => el('q', { class: 't', text: r.fixDetail })),
+        sec('COMMENTS', all.filter((r) => r.tea).sort((a, b) => b.updatedAt - a.updatedAt), (r) => el('q', { class: 't', text: r.tea })));
 
       const copy = el('button', { class: 'ghost', type: 'button', text: 'COPY MY FEEDBACK' });
       copy.addEventListener('click', async () => {
-        const out = all.sort((a, b) => a.n - b.n).map((r) => ({
-          video: r.n, status: statusOf(r), name: r.name, creativity: r.creative && optByKey[r.creative].label,
-          reaction: r.reaction && optByKey[r.reaction].label, followUp: r.secondary && optByKey[r.secondary].label,
-          landed: r.clarity && optByKey[r.clarity].label, style: r.style && optByKey[r.style].label,
-          fix: r.fix && optByKey[r.fix].label, fixDetail: r.fixDetail, other: r.otherText, commentMood: r.teaMood && optByKey[r.teaMood].label, tea: r.tea }));
+        const out = all.sort((a, b) => a.n - b.n).map((r) => ({ video: r.n, name: r.name, vote: r.vote, idea: (r.votes || {}).reaction, creativity: (r.votes || {}).creative, visuals: (r.votes || {}).style, suggestion: r.fixDetail, comment: r.tea }));
         try { await navigator.clipboard.writeText(JSON.stringify(out, null, 2)); copy.textContent = 'COPIED ✓'; } catch (e) { copy.textContent = "COULDN'T COPY"; }
         setTimeout(() => { copy.textContent = 'COPY MY FEEDBACK'; }, 1800);
       });
       let armed = false;
       const clear = el('button', { class: 'ghost', type: 'button', text: 'CLEAR MY REVIEWS' });
       clear.addEventListener('click', async () => {
-        if (!armed) { armed = true; clear.textContent = 'SURE? TAP AGAIN'; setTimeout(() => { armed = false; clear.textContent = 'CLEAR MY REVIEWS'; }, 3000); return; }
+        if (!armed) { armed = true; clear.textContent = 'CONFIRM CLEAR'; setTimeout(() => { armed = false; clear.textContent = 'CLEAR MY REVIEWS'; }, 3000); return; }
         try { await adapter.clear(); } catch (e) { /* in-memory state still cleared below */ }
         [...reviews.keys()].forEach((id) => { reviews.delete(id); syncMark(id); });
         if (window.dropTime) window.dropTime.reset(); lastSent = 0;

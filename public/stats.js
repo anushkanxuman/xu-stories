@@ -8,7 +8,7 @@
   const F = (ms) => (window.dropTime ? window.dropTime.format(ms) : '0:00');
   const el = (tag, cls, txt) => { const n = document.createElement(tag); if (cls) n.className = cls; if (txt != null) n.textContent = txt; return n; };
 
-  let pace = { secondsPerVideo: 60, label: '1 verdict per minute' };
+  let pace = { secondsPerVideo: 60, label: '1 review per minute' };
   let total = 0, cur = null, reviewed = 0, community = null;
 
   const card = (title, extra) => {
@@ -52,7 +52,7 @@
     return Object.values(by).sort((a, b) => (b.total ? b.good / b.total : -1) - (a.total ? a.good / a.total : -1) || b.total - a.total);
   }
   function techCard() {
-    const c = card('WHICH TECH WINS'), team = community && community.ready && community.votes;
+    const c = card('TOOL PERFORMANCE'), team = community && community.ready && community.votes;
     [['SCRIPT', /^script/i], ['VIDEO GEN', /^video$/i]].forEach(([title, re]) => {
       const rows = techRows(re);
       if (!rows.length) return;
@@ -85,10 +85,10 @@
 
     // TIME HERE
     const t = card('TIME HERE');
-    t.append(el('div', 'st-big', F(ms)), el('p', 'st-sub', 'Only counts while you are really here.'));
+    t.append(el('div', 'st-big', F(ms)), el('p', 'st-sub', 'Active viewing time only.'));
 
-    // THIS DROP
-    const r = card('THIS DROP', cur && window.dropNums ? el('span', 'live', '#' + cur.video.n) : null);
+    // THIS VIDEO
+    const r = card('THIS VIDEO', cur && window.dropNums ? el('span', 'live', '#' + cur.video.n) : null);
     if (cur) {
       const id = cur.video.id, w = window.dropTime ? window.dropTime.watch(id) : { pct: 0, done: 0 };
       r.append(el('div', 'st-big', F(window.dropTime ? window.dropTime.videoMs(id) : 0)),
@@ -101,7 +101,7 @@
     g.append(row('Reviewed', `${reviewed} / ${total}`), row('Left', String(left)));
     const bar = el('div', 'st-bar'), fill = el('i'); fill.style.width = (reviewed / total * 100) + '%'; bar.append(fill); g.append(bar);
     if (left) g.append(el('p', 'st-sub', `About ${Math.max(1, Math.round(left * pace.secondsPerVideo / 60))} min left at the goal pace.`));
-    else g.append(el('p', 'st-sub', 'All done. Check your results.'));
+    else g.append(el('p', 'st-sub', 'All videos reviewed. See your results.'));
 
     // YOUR VOTES (optional likes / dislikes, overall and per question)
     const mineAll = [...(window.dropReviews ? window.dropReviews().values() : [])];
@@ -109,10 +109,10 @@
     mineAll.forEach((x) => { if (x.vote === 'up') up++; else if (x.vote === 'down') down++; Object.entries(x.votes || {}).forEach(([k, d]) => { (asp[k] = asp[k] || { up: 0, down: 0 })[d]++; }); });
     const v = card('YOUR VOTES');
     v.append(vrow('Videos', up, down, true), ...ASPECTS.filter(([k]) => asp[k]).map(([k, label]) => vrow(label, asp[k].up, asp[k].down)));
-    if (!up && !down && !Object.keys(asp).length) v.append(el('p', 'st-sub', 'Tap 👍 or 👎 anywhere in the review. Optional.'));
+    if (!up && !down && !Object.keys(asp).length) v.append(el('p', 'st-sub', 'Like or dislike a video to see your totals here.'));
 
-    // YOUR TRACE: one dot per video, in feed order; tap to jump there
-    const trace = card('YOUR TRACE'), grid = el('div', 'tr-grid');
+    // VIEWING HISTORY: one dot per video, in feed order; tap to jump there
+    const trace = card('VIEWING HISTORY'), grid = el('div', 'tr-grid');
     let seen = 0, finished = 0, pctSum = 0;
     (window.drop ? window.drop.videos : []).forEach((vd, i) => {
       const w = window.dropTime ? window.dropTime.watch(vd.id) : { pct: 0, done: 0 }, m = window.dropMine ? window.dropMine(vd.id) : {};
@@ -130,9 +130,9 @@
     const nodes = [p, t, r, g, v, techCard(), trace];
     const n = el('section', 'st-card st-note-card');
     if (community && community.ready) {
-      n.append(el('h3', null, 'TYPICAL REVIEWER'),
+      n.append(el('h3', null, 'REVIEWER BENCHMARK'),
         row('Videos reviewed', String(community.medianVideos)), row('Time here', F(community.medianSeconds * 1000)),
-        el('p', 'st-note', `Median of ${community.reviewers} real reviewers.`));
+        el('p', 'st-note', `Median across ${community.reviewers} reviewers.`));
     } else {
       n.append(el('p', 'st-note', community && community.needed
         ? `Compare with other reviewers unlocks after ${community.needed} people have reviewed (${community.reviewers} so far).`
