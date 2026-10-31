@@ -22,7 +22,7 @@
       const s = document.createElement('div');
       s.className = 'slide'; s.style.top = i * 100 + '%';
       s.innerHTML = '<video playsinline preload="none"></video><div class="shade"></div><div class="num"></div><span class="mark" hidden></span>' +
-        '<div class="info"><div class="user"><div class="avatar"><span>X</span></div><span class="uname">xu.stories</span></div>' +
+        '<div class="info"><div class="user"><div class="avatar"><span>X</span></div><span class="uname">content.mockup</span></div>' +
         '<p class="cap"></p><div class="audio">♪ Original audio</div></div>' +
         '<div class="bar"><i></i></div><div class="flash"><svg viewBox="0 0 24 24"><path d="M7 4.500v15l13-7.500z"/></svg></div>';
       const video = s.querySelector('video');
@@ -33,7 +33,7 @@
       video.addEventListener('loadedmetadata', () => fit(s, video.videoWidth, video.videoHeight));
       const num = s.querySelector('.num'); num.textContent = '#' + v.n; num.hidden = !window.dropNums;
       const cap = s.querySelector('.cap');
-      cap.textContent = v.caption || v.description || `Xu's Stories · Video ${v.n}`;
+      cap.textContent = v.caption || v.description || `Content Mockup · Video ${v.n}`;
       cap.addEventListener('click', () => cap.classList.toggle('open')); // tap to read the full caption
       s.querySelector('video').draggable = false;
       video.addEventListener('timeupdate', () => {
