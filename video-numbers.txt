@@ -70,3 +70,4 @@
 70	zz70_monday_inbox.mp4
 71	zz71_skills_worth_more.mp4
 72	zz72_flight_strangers.mp4
+73	zz73_typed_deleted_send.mp4

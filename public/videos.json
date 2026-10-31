@@ -502,5 +502,12 @@
     "description": "",
     "src": "/videos/zz72_flight_strangers.mp4",
     "poster": "/posters/zz72_flight_strangers.mp4.jpg"
+  },
+  {
+    "id": "zz73_typed_deleted_send.mp4",
+    "title": "zz73 typed deleted send",
+    "description": "",
+    "src": "/videos/zz73_typed_deleted_send.mp4",
+    "poster": "/posters/zz73_typed_deleted_send.mp4.jpg"
   }
 ]

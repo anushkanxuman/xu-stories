@@ -371,6 +371,26 @@
           "tool": "Ultra-photorealistic cinematic short film"
         }
       ]
+    },
+    "73": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Character",
+          "tool": "Grok Imagine"
+        },
+        {
+          "label": "Video",
+          "tool": "Grok Imagine"
+        },
+        {
+          "label": "Style",
+          "tool": "Ultra-photorealistic cinematic short film"
+        }
+      ]
     }
   }
 }
