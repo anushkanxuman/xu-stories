@@ -127,7 +127,7 @@
   let nick = store.get('xs-nick') || '';   // the reviewer's name, asked first
   const needName = () => !nick && store.get('xs-name-asked') !== '1';
 
-  const hasAny = (r) => !!(r && (r.reaction || r.creative || r.secondary || r.style || r.clarity || r.fix || r.fixDetail || r.tea || r.teaMood || r.vote));
+  const hasAny = (r) => !!(r && (r.reaction || r.creative || r.secondary || r.style || r.clarity || r.fix || r.fixDetail || r.tea || r.teaMood || r.vote || (r.votes && Object.keys(r.votes).length)));
   const statusOf = (r) => (!r ? 'none' : r.submittedAt ? 'submitted' : r.reaction ? 'reacted' : hasAny(r) ? 'draft' : 'none');
   const counts = () => { // reacted = picked a first impression, submitted = dropped a verdict, touched = either
     let reacted = 0, submitted = 0, touched = 0;
@@ -219,13 +219,33 @@
     return wrap;
   }
 
-  function card({ title, prompt, accent = 'purple', open = false, optional = false, done = false }, content) {
+  /* optional thumbs up / down: get() = current value, set(v) = save it (undefined clears) */
+  function voteButtons(what, get, set) {
+    const wrap = el('span', { class: 'rv-vote-b' });
+    const paint = () => wrap.querySelectorAll('.vote-btn').forEach((b) => b.setAttribute('aria-pressed', String(get() === b.dataset.dir)));
+    for (const dir of ['up', 'down']) {
+      const b = el('button', { class: 'vote-btn', type: 'button', dataset: { dir }, title: (dir === 'up' ? 'Like: ' : 'Dislike: ') + what, 'aria-label': (dir === 'up' ? 'Like ' : 'Dislike ') + what });
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3zm2 9V10.5l3.5-6.2a1.6 1.6 0 0 1 3 .8L15 9h4.6a2 2 0 0 1 2 2.4l-1.3 6.8a2.5 2.5 0 0 1-2.5 1.8H9z"/></svg>';
+      if (dir === 'down') b.firstChild.style.transform = 'rotate(180deg)';
+      b.addEventListener('click', () => { set(get() === dir ? undefined : dir); paint(); });
+      wrap.append(b);
+    }
+    paint();
+    return wrap;
+  }
+
+  function card({ title, prompt, accent = 'purple', open = false, optional = false, done = false, vote = '' }, content) {
     const c = el('section', { class: 'card' + (open ? ' open' : '') + (done ? ' done' : ''), dataset: { accent } });
     const head = el('button', { class: 'cd-head', type: 'button', 'aria-expanded': open });
     head.append(...[el('span', { class: 'cd-title', text: title }), optional ? el('span', { class: 'cd-opt', text: 'OPTIONAL' }) : null,
       el('span', { class: 'cd-check', 'aria-hidden': 'true', text: '✓' }), el('span', { class: 'cd-chev', 'aria-hidden': 'true', text: '▾' })].filter(Boolean));
     head.addEventListener('click', () => { const o = c.classList.toggle('open'); head.setAttribute('aria-expanded', o); });
-    c.append(head, el('div', { class: 'cd-body' }, prompt ? el('p', { class: 'cd-prompt', text: prompt }) : null, content));
+    const top = el('div', { class: 'cd-top' }, head);
+    if (vote) top.append(voteButtons(title.replace(/[^\w\s'?]/g, '').trim().toLowerCase(), () => ((reviews.get(cur.video.id) || {}).votes || {})[vote], (v) => edit((x) => {
+      const m = { ...(x.votes || {}) }; if (v) m[vote] = v; else delete m[vote];
+      x.votes = Object.keys(m).length ? m : undefined;
+    })));
+    c.append(top, el('div', { class: 'cd-body' }, prompt ? el('p', { class: 'cd-prompt', text: prompt }) : null, content));
     c.setDone = (v) => c.classList.toggle('done', !!v);
     return c;
   }
@@ -246,7 +266,7 @@
       el('div', { class: 'rv-prog' }, el('i')));
 
     // 1. first impression (replaces the old like button)
-    const c1 = card({ title: cat.heading, prompt: cat.prompt, open: true, done: !!r.reaction },
+    const c1 = card({ title: cat.heading, prompt: cat.prompt, open: true, vote: 'reaction', done: !!r.reaction },
       options(cat.options, r.reaction, cat.heading, (key, o) => {
         setField('reaction', key);
         c1.setDone(key);
@@ -257,27 +277,27 @@
     // 2. secondary category: only where the config says it adds real feedback
     if (entry.secondary && cfg.categories[entry.secondary]) {
       const sc = cfg.categories[entry.secondary];
-      const c2 = card({ title: sc.heading, prompt: cfg.secondaryPrompts[entry.secondary] || sc.prompt, optional: true, done: !!r.secondary },
+      const c2 = card({ title: sc.heading, vote: 'secondary', prompt: cfg.secondaryPrompts[entry.secondary] || sc.prompt, optional: true, done: !!r.secondary },
         options(sc.options, r.secondary, sc.heading, (key) => { setField('secondary', key); c2.setDone(key); }, oth('secondary', r)));
       cards.push(c2);
     }
 
     // 3. creativity rating (good and bad answers on purpose)
     const cr = cfg.creative;
-    const cc = card({ title: cr.heading, prompt: cr.prompt, accent: 'pink', open: true, done: !!r.creative },
+    const cc = card({ title: cr.heading, vote: 'creative', prompt: cr.prompt, accent: 'pink', open: true, done: !!r.creative },
       options(cr.options, r.creative, cr.heading, (key) => { setField('creative', key); cc.setDone(key); }, oth('creative', r)));
     cards.push(cc);
 
     // 4. did it land (post-watch clarity)
     const cl = cfg.clarity;
-    const c3 = card({ title: cl.heading, prompt: cl.prompt, accent: 'lime', optional: true, done: !!r.clarity },
+    const c3 = card({ title: cl.heading, vote: 'clarity', prompt: cl.prompt, accent: 'lime', optional: true, done: !!r.clarity },
       options(cl.options, r.clarity, cl.heading, (key) => { setField('clarity', key); c3.setDone(key); }, oth('clarity', r)));
     cards.push(c3);
 
     // 5. the video's own visual style, only when the style label is reliable
     if (entry.style) {
       const st = cfg.style;
-      const c4 = card({ title: st.heading, prompt: st.prompt.replace('{style}', entry.style), accent: 'pink', optional: true, done: !!r.style },
+      const c4 = card({ title: st.heading, vote: 'style', prompt: st.prompt.replace('{style}', entry.style), accent: 'pink', optional: true, done: !!r.style },
         options(st.options, r.style, st.heading, (key) => { setField('style', key); c4.setDone(key); }, oth('style', r)));
       cards.push(c4);
     }
@@ -288,7 +308,7 @@
     const syncDetail = () => { detail.hidden = !r.fix || r.fix === 'fix.nothing' || r.fix === 'other.fix'; };
     let dTimer = 0;
     detail.addEventListener('input', () => { clearTimeout(dTimer); dTimer = setTimeout(() => edit((x) => { x.fixDetail = detail.value.trim() || undefined; }), 300); });
-    const c5 = card({ title: fx.heading, optional: true, done: !!r.fix },
+    const c5 = card({ title: fx.heading, vote: 'fix', optional: true, done: !!r.fix },
       el('div', {}, options(fx.options, r.fix, fx.heading, (key) => {
         setField('fix', key);
         if (!key || key === 'fix.nothing' || key === 'other.fix') { edit((x) => { x.fixDetail = undefined; }); detail.value = ''; }
@@ -314,19 +334,9 @@
       el('div', {}, el('p', { class: 'cd-prompt', text: tea.moods.prompt }), moods, starters, ta));
     cards.push(c6);
 
-    // optional quick like / dislike, kept apart from the first-impression card
-    const thumb = (dir) => {
-      const b = el('button', { class: 'vote-btn', type: 'button', dataset: { dir }, 'aria-label': dir === 'up' ? 'Like this video' : 'Dislike this video', 'aria-pressed': String(r.vote === dir) });
-      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3zm2 9V10.5l3.5-6.2a1.6 1.6 0 0 1 3 .8L15 9h4.6a2 2 0 0 1 2 2.4l-1.3 6.8a2.5 2.5 0 0 1-2.5 1.8H9z"/></svg>';
-      if (dir === 'down') b.firstChild.style.transform = 'rotate(180deg)';
-      b.addEventListener('click', () => {
-        const next = (reviews.get(cur.video.id) || {}).vote === dir ? undefined : dir;
-        edit((x) => { x.vote = next; });
-        voteRow.querySelectorAll('.vote-btn').forEach((o) => o.setAttribute('aria-pressed', String(next === o.dataset.dir)));
-      });
-      return b;
-    };
-    const voteRow = el('div', { class: 'rv-vote' }, el('span', { class: 'rv-vote-t', text: 'LIKE IT?' }), el('span', { class: 'cd-opt', text: 'OPTIONAL' }), el('span', { class: 'rv-vote-b' }, thumb('up'), thumb('down')));
+    // optional quick like / dislike on the whole video (each card has its own too)
+    const voteRow = el('div', { class: 'rv-vote' }, el('span', { class: 'rv-vote-t', text: 'LIKE IT?' }), el('span', { class: 'cd-opt', text: 'OPTIONAL' }),
+      voteButtons('this video', () => (reviews.get(cur.video.id) || {}).vote, (v) => edit((x) => { x.vote = v; })));
 
     body.replaceChildren(head, voteRow, ...cards);
     body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap');

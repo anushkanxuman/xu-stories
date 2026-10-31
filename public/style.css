@@ -329,3 +329,10 @@ code { background: var(--card-2); padding: 2px 6px; border-radius: 6px; }
 .gal-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 8px 8px; color: #fff; font-size: .72rem; line-height: 1.25; background: linear-gradient(transparent, rgba(0,0,0,.8)); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .gal-mark { position: absolute; top: 6px; right: 6px; font-size: 1rem; background: rgba(255,255,255,.9); border-radius: 10px; padding: 1px 5px; }
 @media (max-width: 700px) { .gal-btn { position: static; margin: 8px auto 0; display: block; } }
+
+/* per-card thumbs */
+.cd-top { display: flex; align-items: center; }
+.cd-top .cd-head { flex: 1; width: auto; min-width: 0; }
+.cd-top .rv-vote-b { gap: 6px; padding-right: 14px; }
+.cd-top .vote-btn { width: 34px; height: 30px; border-radius: 10px; }
+.cd-top .vote-btn svg { width: 17px; height: 17px; }
