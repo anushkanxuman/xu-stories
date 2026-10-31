@@ -76,32 +76,15 @@
     const expected = Math.floor(ms / 1000 / pace.secondsPerVideo);
     const diff = reviewed - expected;
 
-    // PACE
-    const p = card('YOUR PACE', el('span', 'live', 'LIVE'));
-    p.classList.add(diff > 0 ? 'ahead' : diff < 0 ? 'behind' : 'even');
-    p.append(el('div', 'st-big', diff === 0 ? 'ON PACE' : Math.abs(diff) + (diff > 0 ? ' AHEAD' : ' BEHIND')),
-      el('p', 'st-sub', diff === 0 ? `Right on the goal of ${pace.label}.`
-        : `${Math.abs(diff)} video${Math.abs(diff) === 1 ? '' : 's'} ${diff > 0 ? 'ahead of' : 'behind'} the goal: ${pace.label}.`));
-
-    // TIME HERE
-    const t = card('TIME HERE');
-    t.append(el('div', 'st-big', F(ms)), el('p', 'st-sub', 'Active viewing time only.'));
-
-    // THIS VIDEO
-    const r = card('THIS VIDEO', cur && window.dropNums ? el('span', 'live', '#' + cur.video.n) : null);
-    if (cur) {
-      const id = cur.video.id, w = window.dropTime ? window.dropTime.watch(id) : { pct: 0, done: 0 };
-      r.append(el('div', 'st-big', F(window.dropTime ? window.dropTime.videoMs(id) : 0)),
-        row('Watched', w.pct + '%'), row('Played to the end', w.done ? w.done + '×' : 'not yet'));
-    }
-
-    // PROGRESS
-    const g = card('PROGRESS');
+    // PROGRESS: reviews done, time spent and pace in one card
     const left = Math.max(0, total - reviewed);
-    g.append(row('Reviewed', `${reviewed} / ${total}`), row('Left', String(left)));
+    const g = card('PROGRESS', el('span', 'live', F(ms)));
+    g.classList.add(diff > 0 ? 'ahead' : diff < 0 ? 'behind' : 'even');
+    g.append(el('div', 'st-big', reviewed + ' / ' + total));
     const bar = el('div', 'st-bar'), fill = el('i'); fill.style.width = (reviewed / total * 100) + '%'; bar.append(fill); g.append(bar);
-    if (left) g.append(el('p', 'st-sub', `About ${Math.max(1, Math.round(left * pace.secondsPerVideo / 60))} min left at the goal pace.`));
-    else g.append(el('p', 'st-sub', 'All videos reviewed. See your results.'));
+    g.append(row('Remaining', String(left)),
+      row('Pace', diff === 0 ? 'On target' : Math.abs(diff) + (diff > 0 ? ' ahead' : ' behind')),
+      row('Time left', left ? '~' + Math.max(1, Math.round(left * pace.secondsPerVideo / 60)) + ' min' : 'Done'));
 
     // YOUR VOTES (optional likes / dislikes, overall and per question)
     const mineAll = [...(window.dropReviews ? window.dropReviews().values() : [])];
@@ -127,7 +110,7 @@
     const lg = el('div', 'tr-legend'); [['new', 'new'], ['seen', 'watched'], ['rev', 'reviewed'], ['up', 'liked'], ['down', 'disliked']].forEach(([c, tx]) => { const s = el('span'); s.append(el('i', 'tr-dot ' + c), tx); lg.append(s); });
     trace.append(lg);
 
-    const nodes = [p, t, r, g, v, techCard(), trace];
+    const nodes = [g, v, techCard(), trace];
     const n = el('section', 'st-card st-note-card');
     if (community && community.ready) {
       n.append(el('h3', null, 'REVIEWER BENCHMARK'),
@@ -141,7 +124,7 @@
     if (community && community.ready && community.totals) {
       const tm = card('TEAM VOTES');
       tm.append(vrow('Videos', community.totals.up, community.totals.down, true), ...ASPECTS.filter(([k]) => community.aspects && community.aspects[k]).map(([k, label]) => vrow(label, community.aspects[k].up, community.aspects[k].down)));
-      nodes.push(tm);
+      nodes.splice(2, 0, tm);
     }
     nodes.push(n);
     root.replaceChildren(...nodes);
