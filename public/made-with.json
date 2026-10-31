@@ -295,6 +295,26 @@
           "tool": "Cinematic AI-generated video"
         }
       ]
+    },
+    "69": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Character",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Video",
+          "tool": "Kling AI (Higgsfield)"
+        },
+        {
+          "label": "Style",
+          "tool": "Ultra-photorealistic cinematic short film"
+        }
+      ]
     }
   }
 }
