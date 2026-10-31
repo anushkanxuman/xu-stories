@@ -431,6 +431,26 @@
           "tool": "Ultra-photorealistic cinematic comedy"
         }
       ]
+    },
+    "76": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Character",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Video",
+          "tool": "Higgsfield AI"
+        },
+        {
+          "label": "Style",
+          "tool": "Ultra-photorealistic cinematic slice-of-life comedy"
+        }
+      ]
     }
   }
 }

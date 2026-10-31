@@ -523,5 +523,12 @@
     "description": "",
     "src": "/videos/zz75_grok.mp4",
     "poster": "/posters/zz75_grok.mp4.jpg"
+  },
+  {
+    "id": "zz76_unemployed_club.mp4",
+    "title": "zz76 unemployed club",
+    "description": "",
+    "src": "/videos/zz76_unemployed_club.mp4",
+    "poster": "/posters/zz76_unemployed_club.mp4.jpg"
   }
 ]
