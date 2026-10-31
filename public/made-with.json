@@ -391,6 +391,26 @@
           "tool": "Ultra-photorealistic cinematic short film"
         }
       ]
+    },
+    "74": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Character",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Video",
+          "tool": "Google Gemini"
+        },
+        {
+          "label": "Style",
+          "tool": "Photorealistic cinematic short film"
+        }
+      ]
     }
   }
 }
