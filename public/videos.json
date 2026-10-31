@@ -488,5 +488,12 @@
     "description": "",
     "src": "/videos/zz70_monday_inbox.mp4",
     "poster": "/posters/zz70_monday_inbox.mp4.jpg"
+  },
+  {
+    "id": "zz71_skills_worth_more.mp4",
+    "title": "zz71 skills worth more",
+    "description": "",
+    "src": "/videos/zz71_skills_worth_more.mp4",
+    "poster": "/posters/zz71_skills_worth_more.mp4.jpg"
   }
 ]

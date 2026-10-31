@@ -68,3 +68,4 @@
 68	zz68_ghost_chair.mp4
 69	zz69_bug_owning_it.mp4
 70	zz70_monday_inbox.mp4
+71	zz71_skills_worth_more.mp4
