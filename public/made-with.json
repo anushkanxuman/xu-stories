@@ -315,6 +315,26 @@
           "tool": "Ultra-photorealistic cinematic short film"
         }
       ]
+    },
+    "71": {
+      "steps": [
+        {
+          "label": "Script",
+          "tool": "ChatGPT"
+        },
+        {
+          "label": "Character",
+          "tool": "Cardboard"
+        },
+        {
+          "label": "Video",
+          "tool": "Cardboard"
+        },
+        {
+          "label": "Style",
+          "tool": "Ultra-photorealistic cinematic short film"
+        }
+      ]
     }
   }
 }
