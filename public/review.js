@@ -143,6 +143,7 @@
     mut(r);
     for (const k of Object.keys(r)) if (r[k] === undefined || r[k] === '') delete r[k];
     r.updatedAt = Date.now();
+    if (hasAny(r)) r.submittedAt = r.submittedAt || r.updatedAt; else delete r.submittedAt; // any tap counts as reviewed straight away, like a like on Insta
     if (nick) r.name = nick; else delete r.name;
     let job;
     if (!hasAny(r) && !r.submittedAt) { reviews.delete(id); job = adapter.remove(id); }
@@ -360,11 +361,7 @@
     if (view === 'results') return;
     const st = statusOf(reviews.get(cur.video.id));
     const last = cur.index === cur.total - 1;
-    const go = () => {
-      const r = reviews.get(cur.video.id);
-      if (hasAny(r) && !r.submittedAt) edit((x) => { x.submittedAt = Date.now(); }); // anything answered counts as reviewed
-      last ? renderResults() : window.drop.goTo(cur.index + 1);
-    };
+    const go = () => { last ? renderResults() : window.drop.goTo(cur.index + 1); };
     const note = el('div', { class: 'bar-note' + (saveErr ? ' err' : st !== 'none' ? ' ok' : ''), 'aria-live': 'polite' });
     note.textContent = saveErr ? "Couldn't save on this device. Your answers stay until you close this page."
       : st === 'none' ? 'Tap anything above. It all saves by itself, all optional.' : `✓ Saved · ${adapter.label}`;
